@@ -16,7 +16,7 @@ public class Main extends Application {
 
             FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/com/bozzat/esepkersoft/SalePoint.fxml"));
             Scene scene = new Scene(fxmlLoader.load());
-            stage.setTitle("FXML test Application");
+            stage.setTitle("FXML test1 Application");
 
             stage.setScene(scene);
             stage.show();
