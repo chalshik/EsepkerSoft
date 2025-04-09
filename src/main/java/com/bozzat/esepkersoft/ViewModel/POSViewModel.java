@@ -73,6 +73,8 @@ public class POSViewModel {
         quantity.set(0);
         unitType.set("шт");
         price.set(0);
+
+
     }
 
     private void cartTableIsEmpty() {
