@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.scene.image.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.bozzat.esepkersoft.Controllers.SalePointController"
+            style="-fx-font-size: 28px;"
+            stylesheets="@styles.css"
+            prefHeight="700.0" prefWidth="1000.0">
+
+    <!-- Main layout divided into left (product management) and right (receipt) panels -->
+    <center>
+        <SplitPane dividerPositions="0.65" orientation="HORIZONTAL">
+            <!-- Left panel - Products and product management -->
+            <VBox spacing="10" style="-fx-font-size: 28px;">
+                <!-- Selected product section with green background -->
+                <VBox styleClass="product-section" spacing="15" style="-fx-font-size: 28px; -fx-padding: 20; -fx-min-height: 200px;">
+                    <HBox alignment="CENTER_LEFT" spacing="15" style="-fx-font-size: 28px;">
+                        <Label fx:id="selectedProductName" styleClass="product-title" text="Пакет бумажный" style="-fx-font-size: 36px; -fx-font-weight: bold;" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Button fx:id="deletebtn" text="🗑" styleClass="icon-button" style="-fx-font-size: 28px; -fx-min-width: 100px; -fx-min-height: 60px;" />
+                    </HBox>
+
+                    <!-- Price and quantity controls -->
+                    <HBox spacing="15" alignment="CENTER_LEFT" style="-fx-font-size: 28px; -fx-padding: 10 0;">
+                        <!-- Price field -->
+                        <HBox styleClass="input-field" style="-fx-font-size: 28px; -fx-min-height: 70px;">
+                            <TextField fx:id="priceField" editable="false" styleClass="price-input" text="0" style="-fx-font-size: 32px;" />
+                            <Label text="СОМ" styleClass="currency-label" style="-fx-font-size: 32px;" />
+                        </HBox>
+
+                        <!-- Quantity controls -->
+                        <HBox spacing="10" HBox.hgrow="ALWAYS" style="-fx-font-size: 28px;">
+                            <Button fx:id="minusbtn" text="−" styleClass="quantity-button" style="-fx-font-size: 28px; -fx-min-width: 100px; -fx-min-height: 60px;" />
+
+                            <HBox styleClass="input-field" style="-fx-font-size: 28px; -fx-min-height: 70px;">
+                                <TextField fx:id="quantityField" styleClass="quantity-input" text="1.000" style="-fx-font-size: 32px;" />
+                                <StackPane fx:id="unitContainer" styleClass="unit-container" style="-fx-font-size: 28px;">
+                                    <Label fx:id="pieceUnitLabel" text="шт" styleClass="unit-button" style="-fx-font-size: 28px; -fx-min-width: 100px; -fx-min-height: 60px;" />
+                                    <Label fx:id="kgUnitLabel" text="кг" styleClass="unit-button" style="-fx-font-size: 28px; -fx-min-width: 100px; -fx-min-height: 60px;" />
+                                </StackPane>
+                            </HBox>
+
+                            <Button fx:id="plusbtn" text="+" styleClass="quantity-button" style="-fx-font-size: 28px; -fx-min-width: 100px; -fx-min-height: 60px;" />
+                        </HBox>
+                    </HBox>
+                </VBox>
+
+                <!-- Barcode scanner field -->
+                <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 10;">
+                    <Label text="Barcode Scanner:" style="-fx-font-size: 28px;"/>
+                    <TextField fx:id="barcodeScannerField" promptText="Scan barcode here..." style="-fx-font-size: 28px; -fx-pref-width: 400px; -fx-min-height: 60px;"/>
+                </HBox>
+
+                <!-- Products table -->
+                <TableView fx:id="productsTable" VBox.vgrow="ALWAYS" style="-fx-font-size: 26px; -fx-fixed-cell-size: 50;" >
+                    <columns>
+                        <TableColumn fx:id="nameColumn" text="Наименование" prefWidth="250" />
+                        <TableColumn fx:id="priceColumn" text="Цена" prefWidth="100" />
+                        <TableColumn fx:id="quantityColumn" text="Кол-во" prefWidth="100" />
+                        <TableColumn fx:id="unitColumn" text="Ед." prefWidth="50" />
+                        <TableColumn fx:id="totalColumn" text="Сумма" prefWidth="120" />
+                    </columns>
+                </TableView>
+            </VBox>
+
+            <!-- Right panel - Receipt -->
+            <VBox styleClass="receipt-panel" spacing="15" style="-fx-font-size: 28px; -fx-padding: 20;">
+                <!-- Total and change section -->
+                <GridPane vgap="15" hgap="15" style="-fx-font-size: 28px;">
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="50" />
+                        <ColumnConstraints percentWidth="50" />
+                    </columnConstraints>
+
+                    <Label text="Итого" GridPane.rowIndex="0" GridPane.columnIndex="0" styleClass="total-label" style="-fx-font-size: 32px;" />
+                    <Label fx:id="totalLabel" text="0.00" GridPane.rowIndex="0" GridPane.columnIndex="1" styleClass="total-value" style="-fx-font-size: 36px; -fx-font-weight: bold;" />
+
+                    <!-- Added Received field here -->
+                    <Label text="Получено" GridPane.rowIndex="1" GridPane.columnIndex="0" styleClass="received-label" style="-fx-font-size: 32px;" />
+                    <HBox GridPane.rowIndex="1" GridPane.columnIndex="1" alignment="CENTER_LEFT" spacing="5" styleClass="received-field-container">
+                        <TextField fx:id="receivedField" text="0.00" styleClass="received-input" style="-fx-font-size: 32px; -fx-pref-width: 150px; -fx-min-height: 60px;" />
+                        <Label text="СОМ" styleClass="currency-label" style="-fx-font-size: 32px;" />
+                    </HBox>
+
+                    <Label text="Сдача" GridPane.rowIndex="2" GridPane.columnIndex="0" styleClass="change-label" style="-fx-font-size: 32px;" />
+                    <Label fx:id="changeLabel" text="0.00" GridPane.rowIndex="2" GridPane.columnIndex="1" styleClass="change-value" style="-fx-font-size: 36px; -fx-font-weight: bold;" />
+                </GridPane>
+
+                <Region VBox.vgrow="ALWAYS" />
+
+                <!-- Payment button -->
+                <Button fx:id="payButton" text="💰 Оплатить" styleClass="pay-button" style="-fx-font-size: 32px; -fx-min-width: 200px; -fx-min-height: 80px;" />
+            </VBox>
+        </SplitPane>
+    </center>
+
+    <!-- Payment method dialog (initially hidden) -->
+    <fx:define>
+        <DialogPane fx:id="paymentDialog" headerText="Выберите способ оплаты" prefWidth="500" prefHeight="350" style="-fx-font-size: 28px;">
+            <content>
+                <VBox spacing="20" style="-fx-font-size: 28px; -fx-padding: 20;">
+                    <Button text="💳 Оплата картой" styleClass="card-payment-button" style="-fx-font-size: 32px; -fx-min-width: 300px; -fx-min-height: 80px;" />
+                    <Button text="💵 Оплата наличными" styleClass="cash-payment-button" style="-fx-font-size: 32px; -fx-min-width: 300px; -fx-min-height: 80px;" />
+                </VBox>
+            </content>
+            <buttonTypes>
+                <ButtonType fx:constant="CANCEL" />
+            </buttonTypes>
+        </DialogPane>
+    </fx:define>
+
+    <!-- Payment success notification (initially hidden) -->
+    <fx:define>
+        <VBox fx:id="paymentNotification" styleClass="payment-notification" visible="false" style="-fx-font-size: 32px; -fx-padding: 20;">
+            <Label fx:id="notificationText" styleClass="notification-text" style="-fx-font-size: 36px;" />
+        </VBox>
+    </fx:define>
+</BorderPane>
