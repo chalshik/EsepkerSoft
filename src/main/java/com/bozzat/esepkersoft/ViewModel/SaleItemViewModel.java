@@ -2,7 +2,7 @@ package com.bozzat.esepkersoft.ViewModel;
 
 import javafx.beans.property.*;
 
-public class SaleItem {
+public class SaleItemViewModel {
     private final StringProperty barcode = new SimpleStringProperty();
     private final StringProperty name = new SimpleStringProperty();
     private final DoubleProperty price = new SimpleDoubleProperty();
@@ -10,7 +10,7 @@ public class SaleItem {
     private final StringProperty unitType = new SimpleStringProperty();
     private final DoubleProperty total = new SimpleDoubleProperty();
 
-    public SaleItem(String barcode, String name, double price, double quantity, String unitType) {
+    public SaleItemViewModel(String barcode, String name, double price, double quantity, String unitType) {
         this.barcode.set(barcode);
         this.name.set(name);
         this.price.set(price);

@@ -1,8 +1,9 @@
 package com.bozzat.esepkersoft.Controllers;
 
 import com.bozzat.esepkersoft.ViewModel.POSViewModel;
-import com.bozzat.esepkersoft.ViewModel.SaleItem;
+import com.bozzat.esepkersoft.ViewModel.SaleItemViewModel;
 import javafx.application.Platform;
+import javafx.beans.Observable;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -35,22 +36,22 @@ public class SalePointController {
     private TextField barcodeScannerField;
 
     @FXML
-    private TableView<SaleItem> productsTable;
+    private TableView<SaleItemViewModel> productsTable;
 
     @FXML
-    private TableColumn<SaleItem, String> nameColumn;
+    private TableColumn<SaleItemViewModel, String> nameColumn;
 
     @FXML
-    private TableColumn<SaleItem, Double> priceColumn;
+    private TableColumn<SaleItemViewModel, Double> priceColumn;
 
     @FXML
-    private TableColumn<SaleItem, Double> quantityColumn;
+    private TableColumn<SaleItemViewModel, Double> quantityColumn;
 
     @FXML
-    private TableColumn<SaleItem, String> unitColumn;
+    private TableColumn<SaleItemViewModel, String> unitColumn;
 
     @FXML
-    private TableColumn<SaleItem, Double> totalColumn;
+    private TableColumn<SaleItemViewModel, Double> totalColumn;
 
     @FXML
     private Label totalLabel;
@@ -82,8 +83,10 @@ public class SalePointController {
     @FXML
     private TextField receivedField;
 
-    private ObservableList<SaleItem> saleItems = FXCollections.observableArrayList();
-    private POSViewModel posService = new POSViewModel(saleItems);
+    ObservableList<SaleItemViewModel> saleItemViewModels = FXCollections.observableArrayList(
+            item -> new Observable[] { item.totalProperty() }
+    );
+    private POSViewModel posService = new POSViewModel(saleItemViewModels);
     // Initialize method (optional)
     @FXML
     public void initialize() {
@@ -107,7 +110,7 @@ public class SalePointController {
 
         totalColumn.setCellValueFactory(cd -> cd.getValue().totalProperty().asObject());
 
-        productsTable.setItems(saleItems);
+        productsTable.setItems(saleItemViewModels);
 // барцоде
         barcodeScannerField.setOnAction(event -> {
             handleBarcode();

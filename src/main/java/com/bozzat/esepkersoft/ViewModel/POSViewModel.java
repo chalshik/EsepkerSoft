@@ -1,6 +1,7 @@
 package com.bozzat.esepkersoft.ViewModel;
 
 import com.bozzat.esepkersoft.Models.Product;
+import com.bozzat.esepkersoft.Models.Sale;
 import com.bozzat.esepkersoft.Services.ProductService;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
@@ -13,11 +14,11 @@ public class POSViewModel {
     private DoubleProperty quantity;
     private StringProperty unitType;
     private DoubleProperty total;
-    private ObservableList<SaleItem> saleItems;
+    private ObservableList<SaleItemViewModel> saleItemViewModels;
     private ProductService productService = new ProductService();
-    private ObjectProperty<SaleItem> currentItem = new SimpleObjectProperty<>();
+    private ObjectProperty<SaleItemViewModel> currentItem = new SimpleObjectProperty<>();
     private DoubleProperty totalOfTotals = new SimpleDoubleProperty();
-    public POSViewModel(ObservableList<SaleItem> saleItems) {
+    public POSViewModel(ObservableList<SaleItemViewModel> saleItemViewModels) {
         barcode = new SimpleStringProperty();
         name = new SimpleStringProperty();
         price = new SimpleDoubleProperty();
@@ -25,15 +26,15 @@ public class POSViewModel {
         unitType = new SimpleStringProperty("шт");
         total = new SimpleDoubleProperty();
 
-        this.saleItems = saleItems;
+        this.saleItemViewModels = saleItemViewModels;
 
         // Bind total = price * quantity
         total.bind(price.multiply(quantity));
 
         //
         totalOfTotals.bind(Bindings.createDoubleBinding(() -> {
-            return saleItems.stream().map(SaleItem::getTotal).mapToDouble(Double::doubleValue).sum();
-        }, saleItems, currentItem));
+            return saleItemViewModels.stream().map(SaleItemViewModel::getTotal).mapToDouble(Double::doubleValue).sum();
+        }, saleItemViewModels));
     }
 
     public Integer handleBarcode(String barcode) {
@@ -42,12 +43,18 @@ public class POSViewModel {
             productNotFound();
             return -1;
         }
-        saleItems.add(new SaleItem(saleItem.getBarcode(), saleItem.getName(), saleItem.getCurrentPrice(), 1.0, saleItem.getUnitType()));
-        int index = saleItems.size() - 1;
+        for (SaleItemViewModel item : saleItemViewModels) {
+            if (item.getBarcode().equals(saleItem.getBarcode())) {
+                item.setQuantity(item.getQuantity() + 1);
+                return saleItemViewModels.indexOf(item);
+            }
+        }
+        saleItemViewModels.add(new SaleItemViewModel(saleItem.getBarcode(), saleItem.getName(), saleItem.getCurrentPrice(), 1.0, saleItem.getUnitType()));
+        int index = saleItemViewModels.size() - 1;
         return index;
     }
 
-    public void getSelectedRow(SaleItem oldItem, SaleItem newItem) {
+    public void getSelectedRow(SaleItemViewModel oldItem, SaleItemViewModel newItem) {
         if (oldItem != null) {
             // Unbind from old selection
             unbindOldItem();
@@ -56,7 +63,7 @@ public class POSViewModel {
             barcode.bindBidirectional(newItem.barcodeProperty());
             name.bindBidirectional(newItem.nameProperty());
             quantity.bindBidirectional(newItem.quantityProperty());
-            unitType.set(newItem.unitTypeProperty().get());
+            unitType.bindBidirectional(newItem.unitTypeProperty());
             price.bindBidirectional(newItem.priceProperty());
             currentItem.set(newItem);
         } else if (oldItem != null && newItem == null){
@@ -73,8 +80,6 @@ public class POSViewModel {
         quantity.set(0);
         unitType.set("шт");
         price.set(0);
-
-
     }
 
     private void cartTableIsEmpty() {
@@ -88,9 +93,9 @@ public class POSViewModel {
 
     public void deleteItem() {
 
-        SaleItem currentItem = this.currentItem.get();
+        SaleItemViewModel currentItem = this.currentItem.get();
         if (currentItem != null) {
-            saleItems.remove(currentItem);
+            saleItemViewModels.remove(currentItem);
             System.out.println(currentItem.getName());
         }
     }
@@ -100,10 +105,11 @@ public class POSViewModel {
 
     private void unbindOldItem() {
         if (this.currentItem.get() != null) {
-            SaleItem currentItem = this.currentItem.get();
+            SaleItemViewModel currentItem = this.currentItem.get();
             barcode.unbindBidirectional(currentItem.barcodeProperty());
             name.unbindBidirectional(currentItem.nameProperty());
             quantity.unbindBidirectional(currentItem.quantityProperty());
+            unitType.unbindBidirectional(currentItem.unitTypeProperty());
             price.unbindBidirectional(currentItem.priceProperty());
         }
     }
