@@ -2,123 +2,161 @@ package com.bozzat.esepkersoft.ViewModel;
 
 import com.bozzat.esepkersoft.Models.Product;
 import com.bozzat.esepkersoft.Models.Sale;
+import com.bozzat.esepkersoft.Models.SaleItem;
 import com.bozzat.esepkersoft.Services.ProductService;
+import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
+import java.util.Optional;
+
 public class POSViewModel {
-    private StringProperty barcode;
-    private StringProperty name;
-    private DoubleProperty price;
-    private DoubleProperty quantity;
-    private StringProperty unitType;
-    private DoubleProperty total;
-    private ObservableList<SaleItemViewModel> saleItemViewModels;
-    private ProductService productService = new ProductService();
-    private ObjectProperty<SaleItemViewModel> currentItem = new SimpleObjectProperty<>();
-    private DoubleProperty totalOfTotals = new SimpleDoubleProperty();
-    public POSViewModel(ObservableList<SaleItemViewModel> saleItemViewModels) {
-        barcode = new SimpleStringProperty();
-        name = new SimpleStringProperty();
-        price = new SimpleDoubleProperty();
-        quantity = new SimpleDoubleProperty();
-        unitType = new SimpleStringProperty("шт");
-        total = new SimpleDoubleProperty();
+    // Constants
+    private static final String DEFAULT_UNIT_TYPE = "шт";
+    private static final String PRODUCT_NOT_FOUND_MESSAGE = "Продукт не найден";
 
-        this.saleItemViewModels = saleItemViewModels;
+    // Properties
+    private final StringProperty barcode = new SimpleStringProperty();
+    private final StringProperty name = new SimpleStringProperty();
+    private final DoubleProperty price = new SimpleDoubleProperty();
+    private final DoubleProperty quantity = new SimpleDoubleProperty();
+    private final StringProperty unitType = new SimpleStringProperty(DEFAULT_UNIT_TYPE);
+    private final DoubleProperty total = new SimpleDoubleProperty();
+    private final DoubleProperty totalOfTotals = new SimpleDoubleProperty();
+    private final ObjectProperty<SaleItemViewModel> currentItem = new SimpleObjectProperty<>();
 
+    // Collections
+    private final ObservableList<SaleItemViewModel> saleItems;
+
+    // Services
+    private final ProductService productService;
+
+    public POSViewModel(ProductService productService) {
+        this.saleItems = FXCollections.observableArrayList(
+                item ->
+                        new Observable[] { item.totalProperty() }
+        );
+        this.productService = productService;
+        initializeBindings();
+        setUpSelectionHandling();
         // Bind total = price * quantity
+
+    }
+
+    private void initializeBindings() {
         total.bind(price.multiply(quantity));
 
         //
-        totalOfTotals.bind(Bindings.createDoubleBinding(() -> {
-            return saleItemViewModels.stream().map(SaleItemViewModel::getTotal).mapToDouble(Double::doubleValue).sum();
-        }, saleItemViewModels));
+        totalOfTotals.bind(Bindings.createDoubleBinding(() ->
+                saleItems.stream()
+                        .mapToDouble(SaleItemViewModel::getTotal)
+                        .sum(),
+                saleItems));
     }
 
-    public Integer handleBarcode(String barcode) {
-        Product saleItem = productService.getProductByBarcode(barcode);
-        if (saleItem == null) {
-            productNotFound();
-            return -1;
-        }
-        for (SaleItemViewModel item : saleItemViewModels) {
-            if (item.getBarcode().equals(saleItem.getBarcode())) {
-                item.setQuantity(item.getQuantity() + 1);
-                return saleItemViewModels.indexOf(item);
+    private void setUpSelectionHandling() {
+        currentItem.addListener((obs, oldValue, newValue) -> {
+            unbindFromItem(oldValue);
+            bindToItem(newValue);
+            if (newValue == null) {
+                resetFields();
             }
+        });
+    }
+    public void processBarcodeInput(String barcode) {
+        Product product = productService.getProductByBarcode(barcode);
+        if (product == null) {
+            currentItem.set(null);
+            handleBarcodeNotFound();
+            return;
         }
-        saleItemViewModels.add(new SaleItemViewModel(saleItem.getBarcode(), saleItem.getName(), saleItem.getCurrentPrice(), 1.0, saleItem.getUnitType()));
-        int index = saleItemViewModels.size() - 1;
-        return index;
+
+        findExistingItem(product.getBarcode()).ifPresentOrElse(
+                this::incrementItemQuantity,
+                () -> addNewItem(product)
+        );
     }
 
-    public void getSelectedRow(SaleItemViewModel oldItem, SaleItemViewModel newItem) {
-        if (oldItem != null) {
-            // Unbind from old selection
-            unbindOldItem();
-        }
-        if (newItem != null) {
-            barcode.bindBidirectional(newItem.barcodeProperty());
-            name.bindBidirectional(newItem.nameProperty());
-            quantity.bindBidirectional(newItem.quantityProperty());
-            unitType.bindBidirectional(newItem.unitTypeProperty());
-            price.bindBidirectional(newItem.priceProperty());
-            currentItem.set(newItem);
-        } else if (oldItem != null && newItem == null){
-            cartTableIsEmpty();
-        } else {
-            productNotFound();
+    public Optional<SaleItemViewModel> findExistingItem(String barcode) {
+        return saleItems.stream()
+                .filter(item -> item.getBarcode().equals(barcode))
+                .findFirst();
+    }
+
+    private void addNewItem(Product product) {
+        SaleItemViewModel saleItem = new SaleItemViewModel(
+                product.getBarcode(),
+                product.getName(),
+                product.getCurrentPrice(),
+                1.0,
+                product.getUnitType());
+        saleItems.add(saleItem);
+        currentItem.set(saleItem);
+    }
+
+    private void unbindFromItem(SaleItemViewModel item) {
+        if (item != null) {
+            barcode.unbindBidirectional(item.barcodeProperty());
+            name.unbindBidirectional(item.nameProperty());
+            quantity.unbindBidirectional(item.quantityProperty());
+            unitType.unbindBidirectional(item.unitTypeProperty());
+            price.unbindBidirectional(item.priceProperty());
         }
     }
 
-    private void productNotFound() {
-        unbindOldItem();
-        barcode.set(null);
-        name.set("Продукт не найден");
-        quantity.set(0);
-        unitType.set("шт");
-        price.set(0);
+    private void bindToItem(SaleItemViewModel item) {
+        if (item != null ) {
+            barcode.bindBidirectional(item.barcodeProperty());
+            name.bindBidirectional(item.nameProperty());
+            quantity.bindBidirectional(item.quantityProperty());
+            unitType.bindBidirectional(item.unitTypeProperty());
+            price.bindBidirectional(item.priceProperty());
+        }
     }
 
-    private void cartTableIsEmpty() {
-        unbindOldItem();
+    private void resetFields() {
         barcode.set(null);
         name.set("");
         quantity.set(0);
-        unitType.set("шт");
+        unitType.set(DEFAULT_UNIT_TYPE);
         price.set(0);
     }
 
-    public void deleteItem() {
-
-        SaleItemViewModel currentItem = this.currentItem.get();
-        if (currentItem != null) {
-            saleItemViewModels.remove(currentItem);
-            System.out.println(currentItem.getName());
-        }
-    }
-    public Double calculateChange(Double rcvAmount) {
-        return totalOfTotals.get() - rcvAmount;
+    private void handleBarcodeNotFound() {
+        resetFields();
+        name.set(PRODUCT_NOT_FOUND_MESSAGE);
     }
 
-    private void unbindOldItem() {
-        if (this.currentItem.get() != null) {
-            SaleItemViewModel currentItem = this.currentItem.get();
-            barcode.unbindBidirectional(currentItem.barcodeProperty());
-            name.unbindBidirectional(currentItem.nameProperty());
-            quantity.unbindBidirectional(currentItem.quantityProperty());
-            unitType.unbindBidirectional(currentItem.unitTypeProperty());
-            price.unbindBidirectional(currentItem.priceProperty());
-        }
+    private void incrementItemQuantity(SaleItemViewModel item) {
+        currentItem.set(item);
+        item.setQuantity(item.getQuantity() + 1);
     }
+
+
+    public void deleteCurrentItem() {
+        if (currentItem.get() != null) {
+            saleItems.remove(currentItem.get());
+        }
+
+    }
+
+    public double calculateChange(double rcvAmount) {
+        return rcvAmount - totalOfTotals.get();
+    }
+
 
     // Property getters
+    public ObservableList<SaleItemViewModel> getSaleItems() { return saleItems; }
     public StringProperty nameProperty() { return name; }
     public DoubleProperty priceProperty() { return price; }
     public DoubleProperty quantityProperty() { return quantity; }
     public StringProperty unitTypeProperty() { return unitType; }
     public DoubleProperty totalProperty() { return total; }
     public DoubleProperty totalOfTotalsProperty() { return totalOfTotals;}
+    public ObjectProperty<SaleItemViewModel> currentItemProperty() { return currentItem; }
+    public void setCurrentItem(SaleItemViewModel newItem) { currentItem.set(newItem);}
+    public void setQuantity(double delta) { quantity.set(delta); }
+    public Double getQuantity() { return quantity.get(); }
 }

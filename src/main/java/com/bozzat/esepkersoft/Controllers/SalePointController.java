@@ -1,9 +1,11 @@
 package com.bozzat.esepkersoft.Controllers;
 
+import com.bozzat.esepkersoft.Services.ProductService;
 import com.bozzat.esepkersoft.ViewModel.POSViewModel;
 import com.bozzat.esepkersoft.ViewModel.SaleItemViewModel;
 import javafx.application.Platform;
 import javafx.beans.Observable;
+import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -12,149 +14,145 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.converter.NumberStringConverter;
 
+import java.util.Objects;
+
 public class SalePointController {
+    // Constants
+    private static final String PIECE_UNIT = "шт";
+    private static final NumberStringConverter NUMBER_CONVERTER = new NumberStringConverter();
 
-    @FXML
-    private Label selectedProductName;
+    // Services
+    ProductService productService = new ProductService();
+    private POSViewModel posService = new POSViewModel(productService);
 
-    @FXML
-    private TextField priceField;
+    // FXML components
+    @FXML private Label selectedProductName;
+    @FXML private TextField priceField;
+    @FXML private TextField quantityField;
+    @FXML private Label kgUnitLabel;
+    @FXML private Label pieceUnitLabel;
+    @FXML private StackPane unitContainer;
+    @FXML private TextField barcodeScannerField;
+    @FXML private TableView<SaleItemViewModel> productsTable;
+    @FXML private TableColumn<SaleItemViewModel, String> nameColumn;
+    @FXML private TableColumn<SaleItemViewModel, Double> priceColumn;
+    @FXML private TableColumn<SaleItemViewModel, Double> quantityColumn;
+    @FXML private TableColumn<SaleItemViewModel, String> unitColumn;
+    @FXML private TableColumn<SaleItemViewModel, Double> totalColumn;
+    @FXML private Label totalLabel;
+    @FXML private Label changeLabel;
+    @FXML private Button payButton;
+    @FXML private DialogPane paymentDialog;
+    @FXML private VBox paymentNotification;
+    @FXML private Label notificationText;
+    @FXML private Button minusbtn;
+    @FXML private Button plusbtn;
+    @FXML private Button deletebtn;
+    @FXML private TextField receivedField;
 
-    @FXML
-    private TextField quantityField;
-
-    @FXML
-    private Label kgUnitLabel;
-
-    @FXML
-    private Label pieceUnitLabel;
-
-    @FXML
-    private StackPane unitContainer;
-
-    @FXML
-    private TextField barcodeScannerField;
-
-    @FXML
-    private TableView<SaleItemViewModel> productsTable;
-
-    @FXML
-    private TableColumn<SaleItemViewModel, String> nameColumn;
-
-    @FXML
-    private TableColumn<SaleItemViewModel, Double> priceColumn;
-
-    @FXML
-    private TableColumn<SaleItemViewModel, Double> quantityColumn;
-
-    @FXML
-    private TableColumn<SaleItemViewModel, String> unitColumn;
-
-    @FXML
-    private TableColumn<SaleItemViewModel, Double> totalColumn;
-
-    @FXML
-    private Label totalLabel;
-
-    @FXML
-    private Label changeLabel;
-
-    @FXML
-    private Button payButton;
-
-    @FXML
-    private DialogPane paymentDialog;
-
-    @FXML
-    private VBox paymentNotification;
-
-    @FXML
-    private Label notificationText;
-
-    @FXML
-    private Button minusbtn;
-
-    @FXML
-    private Button plusbtn;
-
-    @FXML
-    private Button deletebtn;
-
-    @FXML
-    private TextField receivedField;
-
-    ObservableList<SaleItemViewModel> saleItemViewModels = FXCollections.observableArrayList(
-            item -> new Observable[] { item.totalProperty() }
-    );
-    private POSViewModel posService = new POSViewModel(saleItemViewModels);
-    // Initialize method (optional)
     @FXML
     public void initialize() {
 
-        totalLabel.textProperty().bind(posService.totalOfTotalsProperty().asString());
+        setUpTableColumns();
+        setUpBindings();
+        setUpEventHandlers();
+        setUpSelectionHandling();
 
-        //
-        receivedField.setOnAction(event -> {
-            calculateChange();
-        });
-        //
-        deletebtn.setOnAction(event -> {
-            deleteItem();
-        });
-// табел
+    }
+
+    private void setUpTableColumns() {
         nameColumn.setCellValueFactory(cd -> cd.getValue().nameProperty());
         priceColumn.setCellValueFactory(cd -> cd.getValue().priceProperty().asObject());
         quantityColumn.setCellValueFactory(cd -> cd.getValue().quantityProperty().asObject());
         unitColumn.setCellValueFactory(cd -> cd.getValue().unitTypeProperty());
-
-
         totalColumn.setCellValueFactory(cd -> cd.getValue().totalProperty().asObject());
 
-        productsTable.setItems(saleItemViewModels);
-// барцоде
-        barcodeScannerField.setOnAction(event -> {
-            handleBarcode();
-        });
+        productsTable.setItems(posService.getSaleItems());
+    }
 
-// binding selected row properties
+    private void setUpBindings() {
         selectedProductName.textProperty().bind(posService.nameProperty());
         priceField.textProperty().bind(posService.priceProperty().asString());
         quantityField.textProperty().bindBidirectional(posService.quantityProperty(), new NumberStringConverter());
-// bind unit selection properties
-
-// add listener to selected
-        productsTable.getSelectionModel().selectedItemProperty().addListener((obs, oldItem, newItem) -> {
-            posService.getSelectedRow(oldItem, newItem);
-        });
-// commit payment button
-        payButton.setOnAction(event -> {
-            showPaymentDialog();
-        });
-        //
-        minusbtn.setOnAction(event -> {
-            minusOne();
-        });
-        plusbtn.setOnAction( event -> {
-            plusOne();
-        });
-        //
-        posService.unitTypeProperty().addListener((obs, oldValue, newValue) -> {
-            changeUnitLabel(newValue);
-        });
-        kgUnitLabel.setVisible(false);
-        pieceUnitLabel.setVisible(true);
+        totalLabel.textProperty().bind(posService.totalOfTotalsProperty().asString());
+        pieceUnitLabel.visibleProperty().bind(Bindings.createBooleanBinding(() -> PIECE_UNIT.equals(posService.unitTypeProperty().get()),
+                posService.unitTypeProperty()
+        ));
+        kgUnitLabel.visibleProperty().bind(pieceUnitLabel.visibleProperty().not());
     }
 
-    public void handleBarcode() {
-        int index = posService.handleBarcode(barcodeScannerField.getText());
-        Platform.runLater(() -> {
-            if (index != -1) {
-                productsTable.getSelectionModel().select(index);
-                productsTable.scrollTo(index);
-            } else {
-                productsTable.getSelectionModel().clearSelection();
+    private void setUpEventHandlers() {
+        barcodeScannerField.setOnAction(e -> processBarcodeInput());
+        deletebtn.setOnAction(e -> deleteCurrentItem());
+        minusbtn.setOnAction(e -> adjustQuantity(-1));
+        plusbtn.setOnAction(e -> adjustQuantity(1));
+        payButton.setOnAction(e -> showPaymentDialog());
+    }
+
+    private void setUpSelectionHandling() {
+        // ViewModel -> Table selection
+        posService.currentItemProperty().addListener((obs, oldVal, newVal) -> {
+            Platform.runLater(() -> updateTableSelection(newVal));
+        });
+
+        // Table selection -> ViewModel
+        productsTable.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (shouldUpdateViewModel(newVal)) {
+                posService.setCurrentItem(newVal);
             }
         });
+    }
+
+    /**
+     * Updates table selection based on ViewModel changes
+     * Handles thread safety and null cases properly
+     */
+    private void updateTableSelection(SaleItemViewModel newItem) {
+        MultipleSelectionModel<SaleItemViewModel> selectionModel = productsTable.getSelectionModel();
+
+        if (newItem == null) {
+            if (selectionModel.getSelectedItem() != null) {
+                selectionModel.clearSelection();
+            }
+            return;
+        }
+
+        // Only update if needed to avoid unnecessary events
+        if (!isSameItem(selectionModel.getSelectedItem(), newItem)) {
+            int itemIndex = productsTable.getItems().indexOf(newItem);
+            if (itemIndex >= 0) {
+                selectionModel.select(itemIndex);
+            }
+        }
+    }
+
+    /**
+     * Determines if ViewModel should be updated from table selection changes
+     */
+    private boolean shouldUpdateViewModel(SaleItemViewModel newItem) {
+        // Skip if selection was cleared
+        if (newItem == null) return false;
+
+        // Get current item safely
+        SaleItemViewModel currentVmItem = posService.currentItemProperty().get();
+
+        // Only update if different items
+        return !isSameItem(currentVmItem, newItem);
+    }
+
+    /**
+     * Safe item comparison using business key (barcode)
+     * More reliable than equals() for model objects
+     */
+    private boolean isSameItem(SaleItemViewModel a, SaleItemViewModel b) {
+        if (a == b) return true;
+        if (a == null || b == null) return false;
+        return Objects.equals(a.getBarcode(), b.getBarcode());
+    }
+
+    private void processBarcodeInput() {
+        posService.processBarcodeInput(barcodeScannerField.getText());
+        barcodeScannerField.clear();
     }
 
 
@@ -165,31 +163,12 @@ public class SalePointController {
         dialog.show();
     }
 
-    public void minusOne() {
-        posService.quantityProperty().set(posService.quantityProperty().get() - 1);
+    public void deleteCurrentItem() {
+        posService.deleteCurrentItem();
+        productsTable.getSelectionModel().clearSelection();
     }
 
-    public void plusOne() {
-        posService.quantityProperty().set(posService.quantityProperty().get() + 1);
+    private void adjustQuantity(double delta) {
+        posService.setQuantity(posService.getQuantity() + delta);
     }
-
-    public void deleteItem() {
-        posService.deleteItem();
-    }
-
-    public void calculateChange() {
-        changeLabel.setText(String.valueOf(posService.calculateChange(Double.parseDouble(receivedField.textProperty().get()))));
-    }
-
-    public void changeUnitLabel(String unitType) {
-        if ("шт".equals(unitType)) {
-            kgUnitLabel.setVisible(false);
-            pieceUnitLabel.setVisible(true);
-        } else {
-            kgUnitLabel.setVisible(true);
-            pieceUnitLabel.setVisible(false);
-        }
-    }
-
-
 }
