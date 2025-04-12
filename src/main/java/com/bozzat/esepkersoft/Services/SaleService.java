@@ -1,6 +1,5 @@
 package com.bozzat.esepkersoft.Services;
 
-import com.bozzat.esepkersoft.Models.Movement;
 import com.bozzat.esepkersoft.Models.Sale;
 import com.bozzat.esepkersoft.Models.SaleItem;
 
@@ -41,54 +40,30 @@ public class SaleService {
             // 3. Process each sale item
             for (SaleItem item : saleItems) {
                 // Verify product exists and has sufficient stock
-                if (!verifyProductAndStock(item.getProductId(), item.getQuantity())) {
-                    throw new Exception("Insufficient stock for product ID: " + item.getProductId());
+                if (!verifyProductAndStock(item.getBarcode(), item.getQuantity())) {
+                    throw new Exception("Insufficient stock for barcode: " + item.getBarcode());
                 }
 
-                // 4. Record inventory movement (outbound)
-                Movement movement = new Movement(
-                        0,
-                        item.getProductId(),
-                        "sale",
-                        -item.getQuantity(), // Negative for outbound
-                        item.getPrice(),
-                        "SALE-" + saleId,
-                        null,
-                        null
-                );
-
-                if (!recordMovement(movement)) {
-                    throw new Exception("Failed to record movement for product ID: " + item.getProductId());
+                // 4. Update inventory (direct deduction)
+                if (!updateInventory(item.getBarcode(), -item.getQuantity())) {
+                    throw new Exception("Failed to update inventory for barcode: " + item.getBarcode());
                 }
 
-                // Get the generated movement ID
-                result = db.executeGet("SELECT last_insert_rowid() as id");
-                if (result.isEmpty()) {
-                    throw new Exception("Failed to retrieve movement ID");
-                }
-                long movementId = ((Number) result.get(0).get("id")).longValue();
-
-                // 5. Update inventory
-                if (!updateInventory(item.getProductId(), -item.getQuantity())) {
-                    throw new Exception("Failed to update inventory for product ID: " + item.getProductId());
-                }
-
-                // 6. Insert sale item with movement reference
+                // 5. Insert sale item
                 String insertItemQuery = "INSERT INTO sale_items " +
-                        "(sale_id, product_id, quantity, price, movement_id) " +
-                        "VALUES (?, ?, ?, ?, ?)";
+                        "(sale_id, barcode, quantity, price) " +
+                        "VALUES (?, ?, ?, ?)";
 
                 if (!db.executeSet(insertItemQuery,
                         saleId,
-                        item.getProductId(),
+                        item.getBarcode(),
                         item.getQuantity(),
-                        item.getPrice(),
-                        movementId)) {
+                        item.getPrice())) {
                     throw new Exception("Failed to insert sale item");
                 }
             }
 
-            // Commit transaction if all operations succeeded
+            // Commit transaction
             db.executeSet("COMMIT");
             return true;
 
@@ -104,42 +79,20 @@ public class SaleService {
             // Start transaction
             db.executeSet("BEGIN TRANSACTION");
 
-            // 1. Get all sale items with their movement IDs
+            // 1. Get all sale items
             List<Map<String, Object>> items = db.executeGet(
-                    "SELECT product_id, quantity, movement_id FROM sale_items WHERE sale_id = ?",
+                    "SELECT barcode, quantity FROM sale_items WHERE sale_id = ?",
                     saleId
             );
 
-            // 2. Reverse each movement and update inventory
+            // 2. Restore inventory for each item
             for (Map<String, Object> item : items) {
-                int productId = ((Number) item.get("product_id")).intValue();
+                String barcode = (String) item.get("barcode");
                 double quantity = ((Number) item.get("quantity")).doubleValue();
-                long movementId = ((Number) item.get("movement_id")).longValue();
 
-                // Create return movement
-                Movement returnMovement = new Movement(
-                        0,
-                        productId,
-                        "return",
-                        quantity, // Positive for return
-                        null, // Original price not needed for returns
-                        "RETURN-SALE-" + saleId,
-                        null,
-                        "Sale cancellation"
-                );
-
-                if (!recordMovement(returnMovement)) {
-                    throw new Exception("Failed to record return movement");
-                }
-
-                // Update inventory
-                if (!updateInventory(productId, quantity)) {
-                    throw new Exception("Failed to update inventory for return");
-                }
-
-                // Delete the original movement
-                if (!db.executeSet("DELETE FROM movements WHERE id = ?", movementId)) {
-                    throw new Exception("Failed to delete original movement");
+                // Add back to inventory
+                if (!updateInventory(barcode, quantity)) {
+                    throw new Exception("Failed to restore inventory for barcode: " + barcode);
                 }
             }
 
@@ -165,14 +118,14 @@ public class SaleService {
     }
 
     // Helper methods
-    private boolean verifyProductAndStock(long productId, double requiredQuantity) {
+    private boolean verifyProductAndStock(String barcode, double requiredQuantity) {
         List<Map<String, Object>> result = db.executeGet(
-                "SELECT quantity FROM inventory WHERE product_id = ?",
-                productId
+                "SELECT quantity FROM inventory WHERE barcode = ?",
+                barcode
         );
 
         if (result.isEmpty()) {
-            System.err.println("Product not found in inventory: " + productId);
+            System.err.println("Product not found in inventory: " + barcode);
             return false;
         }
 
@@ -180,26 +133,10 @@ public class SaleService {
         return currentStock >= requiredQuantity;
     }
 
-    private boolean updateInventory(long productId, double quantityChange) {
-        // Update or insert inventory record
-        String query = "INSERT OR REPLACE INTO inventory (product_id, quantity, last_updated) " +
-                "VALUES (?, COALESCE((SELECT quantity FROM inventory WHERE product_id = ?), 0) + ?, datetime('now', 'localtime'))";
+    private boolean updateInventory(String barcode, double quantityChange) {
+        String query = "INSERT OR REPLACE INTO inventory (barcode, quantity, last_updated) " +
+                "VALUES (?, COALESCE((SELECT quantity FROM inventory WHERE barcode = ?), 0) + ?, datetime('now', 'localtime'))";
 
-        return db.executeSet(query, productId, productId, quantityChange);
-    }
-
-    private boolean recordMovement(Movement movement) {
-        String query = "INSERT INTO movements " +
-                "(product_id, type, quantity, price_per_unit, reference_id, notes, movement_date) " +
-                "VALUES (?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))";
-
-        return db.executeSet(query,
-                movement.getProductId(),
-                movement.getType(),
-                movement.getQuantity(),
-                movement.getPricePerUnit(),
-                movement.getReferenceId(),
-                movement.getNotes()
-        );
+        return db.executeSet(query, barcode, barcode, quantityChange);
     }
 }

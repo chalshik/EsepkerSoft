@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<DialogPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            stylesheets="@styles1.css"
+            fx:controller="com.bozzat.esepkersoft.Controllers.PaymentDialogController"
+            prefWidth="500" prefHeight="400">
+
+    <content>
+        <VBox spacing="15" alignment="CENTER">
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20"/>
+            </padding>
+
+            <!-- Header Section -->
+            <Label text="Select Payment Method" styleClass="header-text"/>
+
+            <!-- Total Amount Display -->
+            <HBox spacing="10" alignment="CENTER">
+                <Label text="Total:" styleClass="label-text"/>
+                <Label fx:id="totalLabel" styleClass="total-amount" text="0.00"/>
+            </HBox>
+
+            <Separator/>
+
+            <!-- Payment Method Selection -->
+            <HBox spacing="15" alignment="CENTER">
+                <Button fx:id="cashButton" text="🪙 Cash" styleClass="payment-button"/>
+                <Button fx:id="cardButton" text="💳 Card" styleClass="payment-button"/>
+            </HBox>
+
+            <!-- Payment Details Panels -->
+            <StackPane VBox.vgrow="ALWAYS">
+                <!-- Cash Payment Form -->
+                <VBox fx:id="cashPaymentPane" spacing="15" visible="false">
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <Label text="Received:" styleClass="label-text"/>
+                        <TextField fx:id="receivedField" promptText="0.00"
+                                   style="-fx-font-size: 16px; -fx-pref-width: 150px;"/>
+                    </HBox>
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <Label text="Change:" styleClass="label-text"/>
+                        <Label fx:id="changeLabel" text="0.00" styleClass="change-amount"/>
+                    </HBox>
+                </VBox>
+
+                <!-- Card Payment Form -->
+                <VBox fx:id="cardPaymentPane" spacing="15" visible="false">
+                    <Label text="Card payment processing..." styleClass="info-text"/>
+                </VBox>
+            </StackPane>
+
+            <!-- Action Buttons -->
+            <HBox spacing="15" alignment="CENTER_RIGHT">
+                <Button fx:id="cancelButton" text="Cancel" styleClass="cancel-button"/>
+                <Button fx:id="confirmButton" text="Confirm" styleClass="confirm-button"/>
+            </HBox>
+        </VBox>
+    </content>
+
+</DialogPane>

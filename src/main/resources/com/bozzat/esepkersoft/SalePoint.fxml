@@ -81,15 +81,10 @@
                     <Label text="Итого" GridPane.rowIndex="0" GridPane.columnIndex="0" styleClass="total-label" style="-fx-font-size: 32px;" />
                     <Label fx:id="totalLabel" text="0.00" GridPane.rowIndex="0" GridPane.columnIndex="1" styleClass="total-value" style="-fx-font-size: 36px; -fx-font-weight: bold;" />
 
-                    <!-- Added Received field here -->
-                    <Label text="Получено" GridPane.rowIndex="1" GridPane.columnIndex="0" styleClass="received-label" style="-fx-font-size: 32px;" />
-                    <HBox GridPane.rowIndex="1" GridPane.columnIndex="1" alignment="CENTER_LEFT" spacing="5" styleClass="received-field-container">
-                        <TextField fx:id="receivedField" text="0.00" styleClass="received-input" style="-fx-font-size: 32px; -fx-pref-width: 150px; -fx-min-height: 60px;" />
-                        <Label text="СОМ" styleClass="currency-label" style="-fx-font-size: 32px;" />
-                    </HBox>
+                    <!-- Removed the row for "Получено" -->
 
-                    <Label text="Сдача" GridPane.rowIndex="2" GridPane.columnIndex="0" styleClass="change-label" style="-fx-font-size: 32px;" />
-                    <Label fx:id="changeLabel" text="0.00" GridPane.rowIndex="2" GridPane.columnIndex="1" styleClass="change-value" style="-fx-font-size: 36px; -fx-font-weight: bold;" />
+                    <Label text="Сдача" GridPane.rowIndex="1" GridPane.columnIndex="0" styleClass="change-label" style="-fx-font-size: 32px;" />
+                    <Label fx:id="changeLabel" text="0.00" GridPane.rowIndex="1" GridPane.columnIndex="1" styleClass="change-value" style="-fx-font-size: 36px; -fx-font-weight: bold;" />
                 </GridPane>
 
                 <Region VBox.vgrow="ALWAYS" />

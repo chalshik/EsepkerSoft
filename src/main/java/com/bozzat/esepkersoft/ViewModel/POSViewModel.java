@@ -26,6 +26,7 @@ public class POSViewModel {
     private final DoubleProperty total = new SimpleDoubleProperty();
     private final DoubleProperty totalOfTotals = new SimpleDoubleProperty();
     private final ObjectProperty<SaleItemViewModel> currentItem = new SimpleObjectProperty<>();
+    private StringProperty paymentMethod = new SimpleStringProperty();
 
     // Collections
     private final ObservableList<SaleItemViewModel> saleItems;
@@ -42,7 +43,6 @@ public class POSViewModel {
         initializeBindings();
         setUpSelectionHandling();
         // Bind total = price * quantity
-
     }
 
     private void initializeBindings() {
@@ -62,6 +62,7 @@ public class POSViewModel {
             bindToItem(newValue);
             if (newValue == null) {
                 resetFields();
+                System.out.println("yes im here");
             }
         });
     }
@@ -116,7 +117,7 @@ public class POSViewModel {
         }
     }
 
-    private void resetFields() {
+    public void resetFields() {
         barcode.set(null);
         name.set("");
         quantity.set(0);
@@ -138,12 +139,16 @@ public class POSViewModel {
     public void deleteCurrentItem() {
         if (currentItem.get() != null) {
             saleItems.remove(currentItem.get());
+            currentItem.set(null);
         }
-
     }
 
     public double calculateChange(double rcvAmount) {
         return rcvAmount - totalOfTotals.get();
+    }
+
+    public void setPaymentMethod(String paymentMethod) {
+        this.paymentMethod.set(paymentMethod);
     }
 
 
@@ -159,4 +164,6 @@ public class POSViewModel {
     public void setCurrentItem(SaleItemViewModel newItem) { currentItem.set(newItem);}
     public void setQuantity(double delta) { quantity.set(delta); }
     public Double getQuantity() { return quantity.get(); }
+    public StringProperty paymentMethodProperty() { return paymentMethod; }
+    public String getPaymentMethod() {return paymentMethod.get(); }
 }

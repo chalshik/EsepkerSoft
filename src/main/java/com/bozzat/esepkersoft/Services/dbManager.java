@@ -111,6 +111,7 @@ public class dbManager {
         createSalesTable();
         createSaleItemsTable();
         createInventoryTable();
+        createUsersTable();
     }
 
     private void createProductsTable() {
@@ -125,14 +126,14 @@ public class dbManager {
     }
     private void createInventoryTable() {
         String query = "CREATE TABLE IF NOT EXISTS inventory (" +
-                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "product_id INTEGER NOT NULL, " +
+                "barcode TEXT PRIMARY KEY NOT NULL, " +  // Changed from product_id to barcode
                 "quantity REAL NOT NULL, " +
                 "last_updated TEXT DEFAULT (datetime('now', 'localtime')), " +
-                "FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE" +
+                "FOREIGN KEY (barcode) REFERENCES products(barcode) ON DELETE CASCADE" +
                 ")";
         executeSet(query);
     }
+
 
     private void createSalesTable() {
         String query = "CREATE TABLE IF NOT EXISTS sales ("
@@ -147,13 +148,20 @@ public class dbManager {
         String query = "CREATE TABLE IF NOT EXISTS sale_items (" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 "sale_id INTEGER NOT NULL, " +
-                "product_id INTEGER NOT NULL, " +
+                "barcode TEXT NOT NULL, " +  // Changed from product_id to barcode
                 "quantity REAL NOT NULL, " +
                 "price REAL NOT NULL, " +
                 "FOREIGN KEY (sale_id) REFERENCES sales(id) ON DELETE CASCADE, " +
-                "FOREIGN KEY (product_id) REFERENCES products(id)" +
+                "FOREIGN KEY (barcode) REFERENCES products(barcode)" +
                 ")";
         executeSet(query);
     }
-
+    private void createUsersTable() {
+        String query = "CREATE TABLE IF NOT EXISTS users (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "username TEXT NOT NULL UNIQUE, " +
+                "password TEXT NOT NULL" +
+                ")";
+        executeSet(query);
+    }
 }
