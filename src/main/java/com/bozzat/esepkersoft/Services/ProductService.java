@@ -23,8 +23,9 @@ public class ProductService {
         Map<String, Object> productData = results.get(0);
         return new Product(
                 ((Number) productData.get("id")).intValue(),
-                (String) productData.get("barcode"),
                 (String) productData.get("name"),
+                (String) productData.get("barcode"),
+                0, // default categoryId
                 (String) productData.get("unit_type"),
                 ((Number) productData.get("current_price")).doubleValue()
         );
@@ -38,11 +39,9 @@ public class ProductService {
             return false;
         }
 
-
-
         String query = "INSERT INTO products " +
                 "(barcode, name, unit_type, current_price) " +
-                "VALUES (?, ?, ?, ?, ?)";
+                "VALUES (?, ?, ?, ?)";
 
         return db.executeSet(query,
                 product.getBarcode().trim(),
@@ -101,8 +100,9 @@ public class ProductService {
         return results.stream()
                 .map(row -> new Product(
                         ((Number) row.get("id")).intValue(),
-                        (String) row.get("barcode"),
                         (String) row.get("name"),
+                        (String) row.get("barcode"),
+                        0, // default categoryId
                         (String) row.get("unit_type"),
                         ((Number) row.get("current_price")).doubleValue()
                 ))
@@ -119,13 +119,14 @@ public class ProductService {
                 "ORDER BY name";
 
         String likeTerm = "%" + searchTerm.trim() + "%";
-        List<Map<String, Object>> results = db.executeGet(query, likeTerm, likeTerm, likeTerm);
+        List<Map<String, Object>> results = db.executeGet(query, likeTerm, likeTerm);
 
         return results.stream()
                 .map(row -> new Product(
                         ((Number) row.get("id")).intValue(),
-                        (String) row.get("barcode"),
                         (String) row.get("name"),
+                        (String) row.get("barcode"),
+                        0, // default categoryId
                         (String) row.get("unit_type"),
                         ((Number) row.get("current_price")).doubleValue()
                 ))

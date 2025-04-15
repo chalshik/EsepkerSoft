@@ -3,6 +3,7 @@ package com.bozzat.esepkersoft.ViewModel;
 import javafx.beans.property.*;
 
 public class SaleItemViewModel {
+    private final IntegerProperty productId = new SimpleIntegerProperty();
     private final StringProperty barcode = new SimpleStringProperty();
     private final StringProperty name = new SimpleStringProperty();
     private final DoubleProperty price = new SimpleDoubleProperty();
@@ -10,7 +11,8 @@ public class SaleItemViewModel {
     private final StringProperty unitType = new SimpleStringProperty();
     private final DoubleProperty total = new SimpleDoubleProperty();
 
-    public SaleItemViewModel(String barcode, String name, double price, double quantity, String unitType) {
+    public SaleItemViewModel(int productId, String barcode, String name, double price, double quantity, String unitType) {
+        this.productId.set(productId);
         this.barcode.set(barcode);
         this.name.set(name);
         this.price.set(price);
@@ -27,13 +29,15 @@ public class SaleItemViewModel {
     }
 
     // Getters for properties (needed for TableView)
+    public IntegerProperty productIdProperty() { return productId; }
     public StringProperty barcodeProperty() { return barcode; }
     public StringProperty nameProperty() { return name; }
     public DoubleProperty priceProperty() { return price; }
     public DoubleProperty quantityProperty() { return quantity; }
     public DoubleProperty totalProperty() { return total; }
-    public StringProperty unitTypeProperty() { return unitType;}
+    public StringProperty unitTypeProperty() { return unitType; }
     // Optional: Getters for values
+    public int getProductId() { return productId.get(); }
     public String getBarcode() { return barcode.get(); }
     public String getName() { return name.get(); }
     public double getPrice() { return price.get(); }
@@ -43,6 +47,7 @@ public class SaleItemViewModel {
 
 
     // Optional: Setters
+    public void setProductId(int productId) { this.productId.set(productId); }
     public void setBarcode(String barcode) { this.barcode.set(barcode); }
     public void setName(String name) { this.name.set(name); }
     public void setPrice(double price) { this.price.set(price); }

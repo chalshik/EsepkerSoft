@@ -142,13 +142,11 @@ public class PaymentDialogController {
                 for (SaleItemViewModel itemVM : items) {
                     saleItems.add(new SaleItem(
                             sale.getId(),
-                            itemVM.barcodeProperty().get(),
-                            itemVM.quantityProperty().get(),
-                            itemVM.priceProperty().get()
+                            itemVM.getProductId(),
+                            itemVM.getQuantity(),
+                            itemVM.getPrice()
                     ));
                 }
-
-
 
                 // Process sale through service
                 SaleService saleService = new SaleService();

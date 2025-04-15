@@ -25,8 +25,8 @@ public class SaleService {
             db.executeSet("BEGIN TRANSACTION");
 
             // 1. Insert the sale record
-            String insertSaleQuery = "INSERT INTO sales (payment_method, total, date) VALUES (?, ?, datetime('now', 'localtime'))";
-            if (!db.executeSet(insertSaleQuery, sale.getPaymentMethod(), sale.getTotal())) {
+            String insertSaleQuery = "INSERT INTO sales (payment_method, total_amount, sale_time, comment) VALUES (?, ?, datetime('now', 'localtime'), ?)";
+            if (!db.executeSet(insertSaleQuery, sale.getPaymentMethod(), sale.getTotalAmount(), sale.getComment())) {
                 throw new Exception("Failed to insert sale record");
             }
 
@@ -40,25 +40,25 @@ public class SaleService {
             // 3. Process each sale item
             for (SaleItem item : saleItems) {
                 // Verify product exists and has sufficient stock
-                if (!verifyProductAndStock(item.getBarcode(), item.getQuantity())) {
-                    throw new Exception("Insufficient stock for barcode: " + item.getBarcode());
+                if (!verifyProductAndStock(item.getProductId(), item.getQuantity())) {
+                    throw new Exception("Insufficient stock for product: " + item.getProductId());
                 }
 
                 // 4. Update inventory (direct deduction)
-                if (!updateInventory(item.getBarcode(), -item.getQuantity())) {
-                    throw new Exception("Failed to update inventory for barcode: " + item.getBarcode());
+                if (!updateInventory(item.getProductId(), -item.getQuantity())) {
+                    throw new Exception("Failed to update inventory for product: " + item.getProductId());
                 }
 
                 // 5. Insert sale item
                 String insertItemQuery = "INSERT INTO sale_items " +
-                        "(sale_id, barcode, quantity, price) " +
+                        "(sale_id, product_id, quantity, unit_price) " +
                         "VALUES (?, ?, ?, ?)";
 
                 if (!db.executeSet(insertItemQuery,
                         saleId,
-                        item.getBarcode(),
+                        item.getProductId(),
                         item.getQuantity(),
-                        item.getPrice())) {
+                        item.getUnitPrice())) {
                     throw new Exception("Failed to insert sale item");
                 }
             }
@@ -81,18 +81,18 @@ public class SaleService {
 
             // 1. Get all sale items
             List<Map<String, Object>> items = db.executeGet(
-                    "SELECT barcode, quantity FROM sale_items WHERE sale_id = ?",
+                    "SELECT product_id, quantity FROM sale_items WHERE sale_id = ?",
                     saleId
             );
 
             // 2. Restore inventory for each item
             for (Map<String, Object> item : items) {
-                String barcode = (String) item.get("barcode");
+                int productId = ((Number) item.get("product_id")).intValue();
                 double quantity = ((Number) item.get("quantity")).doubleValue();
 
                 // Add back to inventory
-                if (!updateInventory(barcode, quantity)) {
-                    throw new Exception("Failed to restore inventory for barcode: " + barcode);
+                if (!updateInventory(productId, quantity)) {
+                    throw new Exception("Failed to restore inventory for product: " + productId);
                 }
             }
 
@@ -118,14 +118,14 @@ public class SaleService {
     }
 
     // Helper methods
-    private boolean verifyProductAndStock(String barcode, double requiredQuantity) {
+    private boolean verifyProductAndStock(int productId, double requiredQuantity) {
         List<Map<String, Object>> result = db.executeGet(
-                "SELECT quantity FROM inventory WHERE barcode = ?",
-                barcode
+                "SELECT quantity FROM inventory WHERE product_id = ?",
+                productId
         );
 
         if (result.isEmpty()) {
-            System.err.println("Product not found in inventory: " + barcode);
+            System.err.println("Product not found in inventory: " + productId);
             return false;
         }
 
@@ -133,10 +133,10 @@ public class SaleService {
         return currentStock >= requiredQuantity;
     }
 
-    private boolean updateInventory(String barcode, double quantityChange) {
-        String query = "INSERT OR REPLACE INTO inventory (barcode, quantity, last_updated) " +
-                "VALUES (?, COALESCE((SELECT quantity FROM inventory WHERE barcode = ?), 0) + ?, datetime('now', 'localtime'))";
+    private boolean updateInventory(int productId, double quantityChange) {
+        String query = "INSERT OR REPLACE INTO inventory (product_id, quantity, last_updated) " +
+                "VALUES (?, COALESCE((SELECT quantity FROM inventory WHERE product_id = ?), 0) + ?, datetime('now', 'localtime'))";
 
-        return db.executeSet(query, barcode, barcode, quantityChange);
+        return db.executeSet(query, productId, productId, quantityChange);
     }
 }

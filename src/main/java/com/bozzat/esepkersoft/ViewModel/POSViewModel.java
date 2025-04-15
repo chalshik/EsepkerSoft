@@ -88,6 +88,7 @@ public class POSViewModel {
 
     private void addNewItem(Product product) {
         SaleItemViewModel saleItem = new SaleItemViewModel(
+                product.getId(),
                 product.getBarcode(),
                 product.getName(),
                 product.getCurrentPrice(),
