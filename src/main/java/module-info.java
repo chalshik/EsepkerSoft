@@ -18,4 +18,6 @@ module com.bozzat.esepkersoft {
 
     // ✅ Allow JavaFX to access properties in Models class
     opens com.bozzat.esepkersoft.Models to javafx.base;
+    exports com.bozzat.esepkersoft.Interfaces;
+    opens com.bozzat.esepkersoft.Interfaces to javafx.fxml;
 }

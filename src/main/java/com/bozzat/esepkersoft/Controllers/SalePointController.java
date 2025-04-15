@@ -8,9 +8,11 @@ import javafx.beans.binding.Bindings;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.converter.NumberStringConverter;
@@ -28,6 +30,7 @@ public class SalePointController {
     private POSViewModel posViewModel = new POSViewModel(productService);
 
     // FXML components
+    @FXML private BorderPane borderPane;
     @FXML private Label selectedProductName;
     @FXML private TextField priceField;
     @FXML private TextField quantityField;
@@ -54,6 +57,16 @@ public class SalePointController {
 
     @FXML
     public void initialize() {
+        Platform.runLater(() -> {
+            Scene scene = borderPane.getScene();
+            if (scene != null) {
+                scene.setOnKeyPressed(event ->{
+                    if (event.getCode() == KeyCode.SHIFT) {
+                        handlePayButtonAction();
+                    }
+                });
+            }
+        });
         setUpTableColumns();
         setUpBindings();
         setUpEventHandlers();
