@@ -107,60 +107,131 @@ public class dbManager {
     // Create necessary tables
     // Create all tables
     private void createTables() {
+        createCategoriesTable();
+        createSuppliersTable();
         createProductsTable();
+        createRetailPricesTable();
+        createStockEntriesTable();
+        createStockBalancesTable();
         createSalesTable();
         createSaleItemsTable();
-        createInventoryTable();
-        createUsersTable();
+        createReturnsTable();
+        createReturnItemsTable();
+    }
+
+    private void createCategoriesTable() {
+        String query = "CREATE TABLE IF NOT EXISTS categories (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "name VARCHAR NOT NULL" +
+                ")";
+        executeSet(query);
+    }
+
+    private void createSuppliersTable() {
+        String query = "CREATE TABLE IF NOT EXISTS suppliers (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "name VARCHAR NOT NULL, " +
+                "contact_info TEXT, " +
+                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
+                ")";
+        executeSet(query);
     }
 
     private void createProductsTable() {
         String query = "CREATE TABLE IF NOT EXISTS products (" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "name VARCHAR NOT NULL, " +
                 "barcode TEXT NOT NULL UNIQUE, " +
-                "name TEXT NOT NULL, " +
-                "unit_type TEXT NOT NULL, " +
-                "current_price REAL NOT NULL" +
-                ")";
-        executeSet(query);
-    }
-    private void createInventoryTable() {
-        String query = "CREATE TABLE IF NOT EXISTS inventory (" +
-                "barcode TEXT PRIMARY KEY NOT NULL, " +  // Changed from product_id to barcode
-                "quantity REAL NOT NULL, " +
-                "last_updated TEXT DEFAULT (datetime('now', 'localtime')), " +
-                "FOREIGN KEY (barcode) REFERENCES products(barcode) ON DELETE CASCADE" +
+                "category_id INTEGER, " +
+                "unit_type VARCHAR NOT NULL, " +
+                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                "FOREIGN KEY (category_id) REFERENCES categories(id)" +
                 ")";
         executeSet(query);
     }
 
+    private void createRetailPricesTable() {
+        String query = "CREATE TABLE IF NOT EXISTS retail_prices (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "product_id INTEGER NOT NULL, " +
+                "retail_price REAL NOT NULL, " +
+                "start_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                "FOREIGN KEY (product_id) REFERENCES products(id)" +
+                ")";
+        executeSet(query);
+    }
+
+    private void createStockEntriesTable() {
+        String query = "CREATE TABLE IF NOT EXISTS stock_entries (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "product_id INTEGER NOT NULL, " +
+                "quantity REAL NOT NULL, " +
+                "purchase_price REAL NOT NULL, " +
+                "supplier_id INTEGER, " +
+                "arrival_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                "note TEXT, " +
+                "FOREIGN KEY (product_id) REFERENCES products(id), " +
+                "FOREIGN KEY (supplier_id) REFERENCES suppliers(id)" +
+                ")";
+        executeSet(query);
+    }
+
+    private void createStockBalancesTable() {
+        String query = "CREATE TABLE IF NOT EXISTS stock_balances (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "product_id INTEGER NOT NULL, " +
+                "quantity REAL NOT NULL, " +
+                "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                "FOREIGN KEY (product_id) REFERENCES products(id)" +
+                ")";
+        executeSet(query);
+    }
 
     private void createSalesTable() {
-        String query = "CREATE TABLE IF NOT EXISTS sales ("
-                + "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                + "date TEXT DEFAULT (datetime('now', 'localtime')), "
-                + "payment_method TEXT NOT NULL, "
-                + "total TEXT NOT NULL)";
+        String query = "CREATE TABLE IF NOT EXISTS sales (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "total_amount REAL NOT NULL, " +
+                "payment_method VARCHAR NOT NULL, " +
+                "sale_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                "comment TEXT" +
+                ")";
         executeSet(query);
     }
 
     private void createSaleItemsTable() {
-        String query = "CREATE TABLE IF NOT EXISTS sale_items (" +
+        String query = "CREATE TABLE IF NOT EXISTS sales_items (" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 "sale_id INTEGER NOT NULL, " +
-                "barcode TEXT NOT NULL, " +  // Changed from product_id to barcode
+                "product_id INTEGER NOT NULL, " +
                 "quantity REAL NOT NULL, " +
-                "price REAL NOT NULL, " +
-                "FOREIGN KEY (sale_id) REFERENCES sales(id) ON DELETE CASCADE, " +
-                "FOREIGN KEY (barcode) REFERENCES products(barcode)" +
+                "unit_price REAL NOT NULL, " +
+                "FOREIGN KEY (sale_id) REFERENCES sales(id), " +
+                "FOREIGN KEY (product_id) REFERENCES products(id)" +
                 ")";
         executeSet(query);
     }
-    private void createUsersTable() {
-        String query = "CREATE TABLE IF NOT EXISTS users (" +
+
+    private void createReturnsTable() {
+        String query = "CREATE TABLE IF NOT EXISTS returns (" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "username TEXT NOT NULL UNIQUE, " +
-                "password TEXT NOT NULL" +
+                "sale_id INTEGER NOT NULL, " +
+                "return_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                "total_refund REAL NOT NULL, " +
+                "reason TEXT, " +
+                "FOREIGN KEY (sale_id) REFERENCES sales(id)" +
+                ")";
+        executeSet(query);
+    }
+
+    private void createReturnItemsTable() {
+        String query = "CREATE TABLE IF NOT EXISTS return_items (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "return_id INTEGER NOT NULL, " +
+                "product_id INTEGER NOT NULL, " +
+                "quantity REAL NOT NULL, " +
+                "unit_price REAL NOT NULL, " +
+                "FOREIGN KEY (return_id) REFERENCES returns(id), " +
+                "FOREIGN KEY (product_id) REFERENCES products(id)" +
                 ")";
         executeSet(query);
     }
