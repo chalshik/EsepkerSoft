@@ -8,8 +8,9 @@ public class Product {
     private String barcode;
     private int categoryId;
     private String unitType;
-    private LocalDateTime createdAt;
     private double currentPrice; // From retail_prices table
+    private LocalDateTime createdAt;
+    private double currentStock;
 
     public Product() {}
 
@@ -45,4 +46,7 @@ public class Product {
 
     public double getCurrentPrice() { return currentPrice; }
     public void setCurrentPrice(double currentPrice) { this.currentPrice = currentPrice; }
+
+    public double getCurrentStock() { return currentStock; }
+    public void setCurrentStock(double currentStock) { this.currentStock = currentStock; }
 }
