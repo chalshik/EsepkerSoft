@@ -159,7 +159,7 @@ public class dbManager {
                 "supplier_id INTEGER, " +
                 "arrival_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
                 "note TEXT, " +
-                "FOREIGN KEY (product_id) REFERENCES products(id), " +
+                "FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE, " +
                 "FOREIGN KEY (supplier_id) REFERENCES suppliers(id)" +
                 ")";
         executeSet(query);
@@ -171,7 +171,7 @@ public class dbManager {
                 "product_id INTEGER NOT NULL, " +
                 "quantity REAL NOT NULL, " +
                 "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
-                "FOREIGN KEY (product_id) REFERENCES products(id)" +
+                "FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE" +
                 ")";
         executeSet(query);
     }
@@ -195,7 +195,7 @@ public class dbManager {
                 "quantity REAL NOT NULL, " +
                 "unit_price REAL NOT NULL, " +
                 "FOREIGN KEY (sale_id) REFERENCES sales(id), " +
-                "FOREIGN KEY (product_id) REFERENCES products(id)" +
+                "FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE" +
                 ")";
         executeSet(query);
     }
@@ -220,7 +220,7 @@ public class dbManager {
                 "quantity REAL NOT NULL, " +
                 "unit_price REAL NOT NULL, " +
                 "FOREIGN KEY (return_id) REFERENCES returns(id), " +
-                "FOREIGN KEY (product_id) REFERENCES products(id)" +
+                "FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE" +
                 ")";
         executeSet(query);
     }
