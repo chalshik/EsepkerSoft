@@ -1,6 +1,6 @@
 package com.bozzat.esepkersoft.Controllers;
 
-import com.bozzat.esepkersoft.Models.Distributor;
+import com.bozzat.esepkersoft.Models.Supplier;
 import com.bozzat.esepkersoft.ViewModel.AddingProductViewModel;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -15,7 +15,7 @@ public class AddingProductController {
     @FXML private TextField productNameField;
     @FXML private ComboBox<String> productTypeCombo;
     @FXML private TextField batchQuantityField;
-    @FXML private ComboBox<Distributor> supplierCombo;
+    @FXML private ComboBox<Supplier> supplierCombo;
     @FXML private TextField purchasePriceField;
     @FXML private TextField retailPriceField;
     @FXML private Button submitButton;
@@ -48,14 +48,14 @@ public class AddingProductController {
         purchasePriceField.textProperty().bindBidirectional(viewModel.purchasePriceProperty(), new NumberStringConverter());
         retailPriceField.textProperty().bindBidirectional(viewModel.retailPriceProperty(), new NumberStringConverter());
         supplierCombo.setItems(viewModel.getSupplierList());
-        supplierCombo.setConverter(new StringConverter<Distributor>() {
+        supplierCombo.setConverter(new StringConverter<Supplier>() {
             @Override
-            public String toString(Distributor distributor) {
-                return distributor != null ? distributor.getName() : "";
+            public String toString(Supplier supplier) {
+                return supplier != null ? supplier.getName() : "";
             }
 
             @Override
-            public Distributor fromString(String s) {
+            public Supplier fromString(String s) {
                 return null;
             }
         });

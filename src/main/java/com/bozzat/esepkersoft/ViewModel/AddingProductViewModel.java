@@ -1,10 +1,11 @@
 package com.bozzat.esepkersoft.ViewModel;
 
-import com.bozzat.esepkersoft.Models.Distributor;
+
 import com.bozzat.esepkersoft.Models.Product;
 import com.bozzat.esepkersoft.Models.StockEntry;
-import com.bozzat.esepkersoft.Services.DistributorService;
+import com.bozzat.esepkersoft.Models.Supplier;
 import com.bozzat.esepkersoft.Services.ProductService;
+import com.bozzat.esepkersoft.Services.SupplierService;
 import javafx.beans.property.*;
 import javafx.collections.*;
 
@@ -16,7 +17,7 @@ public class AddingProductViewModel {
     private final StringProperty productName = new SimpleStringProperty();
     private final StringProperty productType = new SimpleStringProperty();
     private final IntegerProperty batchQuantity = new SimpleIntegerProperty();
-    private final ObjectProperty<Distributor> supplier = new SimpleObjectProperty<Distributor>();
+    private final ObjectProperty<Supplier> supplier = new SimpleObjectProperty<Supplier>();
     private final DoubleProperty purchasePrice = new SimpleDoubleProperty();
     private final DoubleProperty retailPrice = new SimpleDoubleProperty();
 
@@ -27,9 +28,10 @@ public class AddingProductViewModel {
 
     // Message property to display validation or success messages
     private final StringProperty message = new SimpleStringProperty();
+    private SupplierService supplierService = new SupplierService();
 
     // List of suppliers for the ComboBox
-    private final ObservableList<Distributor> supplierList = FXCollections.observableList(DistributorService.getAllDistributors());
+    private final ObservableList<Supplier> supplierList = FXCollections.observableList(supplierService.getAllSuppliers());
     // Models
     private Product product = new Product();
 
@@ -84,7 +86,7 @@ public class AddingProductViewModel {
         return batchQuantity;
     }
 
-    public ObjectProperty<Distributor> supplierProperty() {
+    public ObjectProperty<Supplier> supplierProperty() {
         return supplier;
     }
 
@@ -119,7 +121,7 @@ public class AddingProductViewModel {
     }
 
     // Supplier list methods
-    public ObservableList<Distributor> getSupplierList() {
+    public ObservableList<Supplier> getSupplierList() {
         return supplierList;
     }
 
