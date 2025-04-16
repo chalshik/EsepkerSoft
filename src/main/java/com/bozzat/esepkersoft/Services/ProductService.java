@@ -2,13 +2,14 @@ package com.bozzat.esepkersoft.Services;
 
 import com.bozzat.esepkersoft.Models.Product;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
 public class ProductService {
     private dbManager db = dbManager.getInstance();
 
-    public  Product getProductByBarcode(String barcode) {
+    public Product getProductByBarcode(String barcode) {
         if (barcode == null || barcode.trim().isEmpty()) {
             return null;
         }
@@ -21,31 +22,35 @@ public class ProductService {
         }
 
         Map<String, Object> productData = results.get(0);
-        return new Product(
-                ((Number) productData.get("id")).intValue(),
-                (String) productData.get("name"),
-                (String) productData.get("barcode"),
-                0, // default categoryId
-                (String) productData.get("unit_type"),
-                ((Number) productData.get("current_price")).doubleValue()
-        );
+        Product product = new Product();
+        product.setId(((Number) productData.get("id")).intValue());
+        product.setName((String) productData.get("name"));
+        product.setBarcode((String) productData.get("barcode"));
+        product.setCategoryId(((Number) productData.get("category_id")).intValue());
+        product.setUnitType((String) productData.get("unit_type"));
+        product.setCurrentPrice(((Number) productData.get("current_price")).doubleValue());
+        product.setCreatedAt(LocalDateTime.parse((String) productData.get("created_at")));
+        
+        return product;
     }
 
     public boolean addProduct(Product product) {
         if (product == null ||
                 product.getBarcode() == null || product.getBarcode().trim().isEmpty() ||
                 product.getName() == null || product.getName().trim().isEmpty() ||
+                product.getUnitType() == null || product.getUnitType().trim().isEmpty() ||
                 product.getCurrentPrice() <= 0) {
             return false;
         }
 
         String query = "INSERT INTO products " +
-                "(barcode, name, unit_type, current_price) " +
-                "VALUES (?, ?, ?, ?)";
+                "(name, barcode, category_id, unit_type, current_price) " +
+                "VALUES (?, ?, ?, ?, ?)";
 
         return db.executeSet(query,
-                product.getBarcode().trim(),
                 product.getName().trim(),
+                product.getBarcode().trim(),
+                product.getCategoryId(),
                 product.getUnitType(),
                 product.getCurrentPrice()
         );

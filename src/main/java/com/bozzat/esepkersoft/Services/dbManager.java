@@ -110,7 +110,6 @@ public class dbManager {
         createCategoriesTable();
         createSuppliersTable();
         createProductsTable();
-        createRetailPricesTable();
         createStockEntriesTable();
         createStockBalancesTable();
         createSalesTable();
@@ -144,19 +143,9 @@ public class dbManager {
                 "barcode TEXT NOT NULL UNIQUE, " +
                 "category_id INTEGER, " +
                 "unit_type VARCHAR NOT NULL, " +
+                "current_price REAL NOT NULL, " +
                 "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
                 "FOREIGN KEY (category_id) REFERENCES categories(id)" +
-                ")";
-        executeSet(query);
-    }
-
-    private void createRetailPricesTable() {
-        String query = "CREATE TABLE IF NOT EXISTS retail_prices (" +
-                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "product_id INTEGER NOT NULL, " +
-                "retail_price REAL NOT NULL, " +
-                "start_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
-                "FOREIGN KEY (product_id) REFERENCES products(id)" +
                 ")";
         executeSet(query);
     }
