@@ -11,6 +11,12 @@ public class SaleItem {
 
     public SaleItem() {}
 
+    public SaleItem(int productId, double quantity, double unitPrice) {
+        this.productId = productId;
+        this.quantity = quantity;
+        this.unitPrice = unitPrice;
+    }
+
     public SaleItem(int saleId, int productId, double quantity, double unitPrice) {
         this.saleId = saleId;
         this.productId = productId;

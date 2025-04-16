@@ -35,10 +35,13 @@ public class SaleService {
             if (result.isEmpty()) {
                 throw new Exception("Failed to retrieve sale ID");
             }
-            long saleId = ((Number) result.get(0).get("id")).longValue();
+            int saleId = ((Number) result.get(0).get("id")).intValue();
 
             // 3. Process each sale item
             for (SaleItem item : saleItems) {
+                // Set the sale ID on the item
+                item.setSaleId(saleId);
+
                 // Verify product exists and has sufficient stock
                 if (!verifyProductAndStock(item.getProductId(), item.getQuantity())) {
                     throw new Exception("Insufficient stock for product: " + item.getProductId());
@@ -55,7 +58,7 @@ public class SaleService {
                         "VALUES (?, ?, ?, ?)";
 
                 if (!db.executeSet(insertItemQuery,
-                        saleId,
+                        item.getSaleId(),
                         item.getProductId(),
                         item.getQuantity(),
                         item.getUnitPrice())) {
