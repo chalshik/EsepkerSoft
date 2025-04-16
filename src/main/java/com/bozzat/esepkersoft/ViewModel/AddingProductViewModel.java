@@ -58,13 +58,31 @@ public class AddingProductViewModel {
     }
 
     public void registerBatch() {
-
-
         if (existingProduct) {
-            StockEntry stockEntry = new StockEntry(batchQuantity.get(), purchasePrice.get(), supplier.get().getId());
-            productService.addBatchEntry(product,stockEntry);
+            Integer id = (supplier.get() != null) ? supplier.get().getId() : null;
+            int supplierId = (id != null) ? id : -1;
+
+            StockEntry stockEntry = new StockEntry(
+                    batchQuantity.get(),
+                    purchasePrice.get(),
+                    supplierId
+            );
+            productService.addBatchEntry(product, stockEntry);
         } else {
-            StockEntry stockEntry = new StockEntry(batchQuantity.get(), purchasePrice.get(), supplier.get().getId());
+            product = new Product(
+                    productName.get(),
+                    productBarcode.get(),
+                    productType.get(),
+                    retailPrice.get()
+            );
+            Integer id = (supplier.get() != null) ? supplier.get().getId() : null;
+            int supplierId = (id != null) ? id : -1;
+
+            StockEntry stockEntry = new StockEntry(
+                    batchQuantity.get(),
+                    purchasePrice.get(),
+                    supplierId
+            );
             productService.registerNewProduct(product, stockEntry);
         }
     }

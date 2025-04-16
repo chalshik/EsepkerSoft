@@ -35,6 +35,12 @@ public class AddingProductController {
 
     @FXML
     public void initialize() {
+        submitButton.setOnAction(e -> {
+            viewModel.registerBatch();
+        });
+        productBarcodeField.setOnAction(e -> {
+            viewModel.searchProduct();
+        });
         initializeBindings();
     }
 

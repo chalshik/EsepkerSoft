@@ -3,8 +3,8 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-
 <?import java.lang.String?>
+
 <VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.bozzat.esepkersoft.Controllers.AddingProductController"
@@ -25,19 +25,19 @@
             <ColumnConstraints hgrow="ALWAYS" />
         </columnConstraints>
 
-        <!-- Product's barcode Field -->
+        <!-- Product Barcode Field (Row 0) -->
         <Label text="Product Barcode:*" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
         <TextField fx:id="productBarcodeField" GridPane.rowIndex="0" GridPane.columnIndex="1"
                    promptText="Enter product barcode" />
 
-        <!-- Product Name Field -->
-        <Label text="Product Name:*" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-        <TextField fx:id="productNameField" GridPane.rowIndex="0" GridPane.columnIndex="1"
+        <!-- Product Name Field (Row 1) -->
+        <Label text="Product Name:*" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+        <TextField fx:id="productNameField" GridPane.rowIndex="1" GridPane.columnIndex="1"
                    promptText="Enter product name" />
 
-        <!-- Product Type ComboBox -->
-        <Label text="Product Type:*" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
-        <ComboBox fx:id="productTypeCombo" GridPane.rowIndex="1" GridPane.columnIndex="1">
+        <!-- Product Type ComboBox (Row 2) -->
+        <Label text="Product Type:*" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+        <ComboBox fx:id="productTypeCombo" GridPane.rowIndex="2" GridPane.columnIndex="1">
             <items>
                 <FXCollections fx:factory="observableArrayList">
                     <String fx:value="piece" />
@@ -46,14 +46,14 @@
             </items>
         </ComboBox>
 
-        <!-- Batch Quantity Field -->
-        <Label text="Batch Quantity:*" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
-        <TextField fx:id="batchQuantityField" GridPane.rowIndex="2" GridPane.columnIndex="1"
+        <!-- Batch Quantity Field (Row 3) -->
+        <Label text="Batch Quantity:*" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+        <TextField fx:id="batchQuantityField" GridPane.rowIndex="3" GridPane.columnIndex="1"
                    promptText="Enter batch quantity" />
 
-        <!-- Supplier ComboBox -->
-        <Label text="Supplier (Optional)" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
-        <ComboBox fx:id="supplierCombo" GridPane.rowIndex="3" GridPane.columnIndex="1">
+        <!-- Supplier ComboBox (Row 4) -->
+        <Label text="Supplier (Optional)" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+        <ComboBox fx:id="supplierCombo" GridPane.rowIndex="4" GridPane.columnIndex="1">
             <items>
                 <FXCollections fx:factory="observableArrayList">
                     <String fx:value="Select supplier" />
@@ -66,23 +66,23 @@
             </items>
         </ComboBox>
 
-        <!-- Purchase Price Field (with currency prefix) -->
-        <Label text="Purchase Price:*" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
-        <HBox spacing="5" GridPane.rowIndex="4" GridPane.columnIndex="1">
+        <!-- Purchase Price Field (Row 5) -->
+        <Label text="Purchase Price:*" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+        <HBox spacing="5" GridPane.rowIndex="5" GridPane.columnIndex="1">
             <Label text="som" />
             <TextField fx:id="purchasePriceField" promptText="0.00" />
         </HBox>
 
-        <!-- Retail Price Field (with currency prefix) -->
-        <Label text="Retail Price:*" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
-        <HBox spacing="5" GridPane.rowIndex="5" GridPane.columnIndex="1">
+        <!-- Retail Price Field (Row 6) -->
+        <Label text="Retail Price:*" GridPane.rowIndex="6" GridPane.columnIndex="0"/>
+        <HBox spacing="5" GridPane.rowIndex="6" GridPane.columnIndex="1">
             <Label text="som" />
             <TextField fx:id="retailPriceField" promptText="0.00" />
         </HBox>
     </GridPane>
 
     <!-- Submit Button -->
-    <Button text="Register Product Batch"  maxWidth="Infinity" />
+    <Button fx:id="submitButton" text="Register Product Batch" maxWidth="Infinity" />
 
     <!-- Batch Summary Section -->
     <TitledPane text="Batch Summary" expanded="true" maxWidth="Infinity">

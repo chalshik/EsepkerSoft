@@ -4,6 +4,7 @@ import com.bozzat.esepkersoft.Models.Product;
 import com.bozzat.esepkersoft.Models.StockEntry;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -24,17 +25,55 @@ public class ProductService {
 
         Map<String, Object> productData = results.get(0);
         Product product = new Product();
-        product.setId(((Number) productData.get("id")).intValue());
+
+        // Safely extract the 'id' value
+        Object idObj = productData.get("id");
+        if (idObj == null) {
+            throw new RuntimeException("Product ID not found.");
+        }
+        product.setId(((Number) idObj).intValue());
+
+        // Safely extract the 'name' value
         product.setName((String) productData.get("name"));
+
+        // Safely extract the 'barcode' value
         product.setBarcode((String) productData.get("barcode"));
-        product.setCategoryId(((Number) productData.get("category_id")).intValue());
+
+        // Safely extract 'category_id' and handle possible null
+        Object categoryIdObj = productData.get("category_id");
+        if (categoryIdObj != null) {
+            product.setCategoryId(((Number) categoryIdObj).intValue());
+        } else {
+            product.setCategoryId(0);  // Or some default value or handling
+        }
+
+        // Safely extract the 'unit_type'
         product.setUnitType((String) productData.get("unit_type"));
-        product.setCurrentPrice(((Number) productData.get("current_price")).doubleValue());
-        product.setCreatedAt(LocalDateTime.parse((String) productData.get("created_at")));
-        
+
+        // Safely extract 'current_price'
+        Object priceObj = productData.get("current_price");
+        if (priceObj != null) {
+            product.setCurrentPrice(((Number) priceObj).doubleValue());
+        } else {
+            product.setCurrentPrice(0.0);  // Handle default value if needed
+        }
+
+        // Safely parse 'created_at' string to LocalDateTime with custom formatter
+        String createdAtStr = (String) productData.get("created_at");
+        if (createdAtStr != null) {
+            // Define the format of your date string
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            try {
+                product.setCreatedAt(LocalDateTime.parse(createdAtStr, formatter));
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to parse 'created_at' date: " + e.getMessage());
+            }
+        } else {
+            product.setCreatedAt(LocalDateTime.now());  // Or a default value
+        }
+
         return product;
     }
-    
     public Product addProduct(Product product) {
         if (product == null ||
                 product.getBarcode() == null || product.getBarcode().trim().isEmpty() ||
@@ -49,15 +88,21 @@ public class ProductService {
             db.executeSet("BEGIN TRANSACTION");
 
             String query = "INSERT INTO products " +
-                    "(name, barcode, category_id, unit_type, current_price) " +
-                    "VALUES (?, ?, ?, ?, ?)";
-
+                    "(name, barcode, unit_type, current_price) " +
+                    "VALUES (?, ?, ?, ?)";
+            System.out.println(product.getName().trim() +
+                    product.getBarcode().trim() +
+                    product.getUnitType() +
+                    product.getCurrentPrice());
             if (!db.executeSet(query,
                     product.getName().trim(),
                     product.getBarcode().trim(),
-                    product.getCategoryId(),
                     product.getUnitType(),
                     product.getCurrentPrice())) {
+                System.out.println(product.getName().trim() +
+                        product.getBarcode().trim() +
+                        product.getUnitType() +
+                        product.getCurrentPrice());
                 throw new Exception("Failed to insert product");
             }
 
@@ -69,6 +114,7 @@ public class ProductService {
 
             // Commit transaction
             db.executeSet("COMMIT");
+
             return createdProduct;
 
         } catch (Exception e) {
@@ -254,10 +300,11 @@ public class ProductService {
 
         try {
             // Start transaction
+            Product createdProduct = addProduct(product);
             db.executeSet("BEGIN TRANSACTION");
 
             // Add the product
-            Product createdProduct = addProduct(product);
+
             if (createdProduct == null) {
                 throw new Exception("Failed to add product");
             }

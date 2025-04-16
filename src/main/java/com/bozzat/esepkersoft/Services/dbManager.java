@@ -143,11 +143,9 @@ public class dbManager {
                 "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 "name VARCHAR NOT NULL, " +
                 "barcode TEXT NOT NULL UNIQUE, " +
-                "category_id INTEGER, " +
                 "unit_type VARCHAR NOT NULL, " +
                 "current_price REAL NOT NULL, " +
-                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
-                "FOREIGN KEY (category_id) REFERENCES categories(id)" +
+                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP " +
                 ")";
         executeSet(query);
     }
