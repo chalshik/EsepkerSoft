@@ -116,6 +116,8 @@ public class dbManager {
         createSaleItemsTable();
         createReturnsTable();
         createReturnItemsTable();
+        createExpenseCategoriesTable();
+        createExpensesTable();
     }
 
     private void createCategoriesTable() {
@@ -221,6 +223,29 @@ public class dbManager {
                 "unit_price REAL NOT NULL, " +
                 "FOREIGN KEY (return_id) REFERENCES returns(id), " +
                 "FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE" +
+                ")";
+        executeSet(query);
+    }
+
+    private void createExpenseCategoriesTable() {
+        String query = "CREATE TABLE IF NOT EXISTS expense_categories (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "name VARCHAR NOT NULL UNIQUE, " +
+                "description TEXT, " +
+                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
+                ")";
+        executeSet(query);
+    }
+
+    private void createExpensesTable() {
+        String query = "CREATE TABLE IF NOT EXISTS expenses (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "amount REAL NOT NULL, " +
+                "category_id INTEGER NOT NULL, " +
+                "description TEXT, " +
+                "expense_date TIMESTAMP NOT NULL, " +
+                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                "FOREIGN KEY (category_id) REFERENCES expense_categories(id)" +
                 ")";
         executeSet(query);
     }

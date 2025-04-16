@@ -155,24 +155,7 @@ public class ProductService {
         }
     }
 
-    public List<Product> getAllProducts() {
-        String query = "SELECT * FROM products ORDER BY name";
-        List<Map<String, Object>> results = db.executeGet(query);
 
-        return results.stream()
-                .map(row -> {
-                    Product product = new Product();
-                    product.setId(((Number) row.get("id")).intValue());
-                    product.setName((String) row.get("name"));
-                    product.setBarcode((String) row.get("barcode"));
-                    product.setCategoryId(((Number) row.get("category_id")).intValue());
-                    product.setUnitType((String) row.get("unit_type"));
-                    product.setCurrentPrice(((Number) row.get("current_price")).doubleValue());
-                    product.setCreatedAt(LocalDateTime.parse((String) row.get("created_at")));
-                    return product;
-                })
-                .toList();
-    }
 
     private boolean updateStockBalance(int productId, double quantityChange) {
         try {
