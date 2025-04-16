@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.collections.FXCollections?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import java.lang.String?>
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.bozzat.esepkersoft.Controllers.AddingProductController"
+      spacing="15" alignment="CENTER"
+      style="-fx-padding: 20;">
+
+    <!-- Title -->
+    <Label text="Product Batch Registration"
+           style="-fx-font-size: 24px; -fx-text-fill: blue;" />
+
+    <!-- Message area for errors/success notifications -->
+    <Label fx:id="messageLabel" text="" visible="false" />
+
+    <!-- Form Grid -->
+    <GridPane hgap="10" vgap="10">
+        <columnConstraints>
+            <ColumnConstraints halignment="RIGHT" minWidth="120" />
+            <ColumnConstraints hgrow="ALWAYS" />
+        </columnConstraints>
+
+        <!-- Product's barcode Field -->
+        <Label text="Product Barcode:*" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+        <TextField fx:id="productBarcodeField" GridPane.rowIndex="0" GridPane.columnIndex="1"
+                   promptText="Enter product barcode" />
+
+        <!-- Product Name Field -->
+        <Label text="Product Name:*" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+        <TextField fx:id="productNameField" GridPane.rowIndex="0" GridPane.columnIndex="1"
+                   promptText="Enter product name" />
+
+        <!-- Product Type ComboBox -->
+        <Label text="Product Type:*" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+        <ComboBox fx:id="productTypeCombo" GridPane.rowIndex="1" GridPane.columnIndex="1">
+            <items>
+                <FXCollections fx:factory="observableArrayList">
+                    <String fx:value="piece" />
+                    <String fx:value="kg" />
+                </FXCollections>
+            </items>
+        </ComboBox>
+
+        <!-- Batch Quantity Field -->
+        <Label text="Batch Quantity:*" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+        <TextField fx:id="batchQuantityField" GridPane.rowIndex="2" GridPane.columnIndex="1"
+                   promptText="Enter batch quantity" />
+
+        <!-- Supplier ComboBox -->
+        <Label text="Supplier (Optional)" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+        <ComboBox fx:id="supplierCombo" GridPane.rowIndex="3" GridPane.columnIndex="1">
+            <items>
+                <FXCollections fx:factory="observableArrayList">
+                    <String fx:value="Select supplier" />
+                    <String fx:value="ABC Distributors" />
+                    <String fx:value="Quality Foods" />
+                    <String fx:value="Global Suppliers" />
+                    <String fx:value="Local Farms" />
+                    <String fx:value="Premium Goods Inc." />
+                </FXCollections>
+            </items>
+        </ComboBox>
+
+        <!-- Purchase Price Field (with currency prefix) -->
+        <Label text="Purchase Price:*" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+        <HBox spacing="5" GridPane.rowIndex="4" GridPane.columnIndex="1">
+            <Label text="som" />
+            <TextField fx:id="purchasePriceField" promptText="0.00" />
+        </HBox>
+
+        <!-- Retail Price Field (with currency prefix) -->
+        <Label text="Retail Price:*" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+        <HBox spacing="5" GridPane.rowIndex="5" GridPane.columnIndex="1">
+            <Label text="som" />
+            <TextField fx:id="retailPriceField" promptText="0.00" />
+        </HBox>
+    </GridPane>
+
+    <!-- Submit Button -->
+    <Button text="Register Product Batch"  maxWidth="Infinity" />
+
+    <!-- Batch Summary Section -->
+    <TitledPane text="Batch Summary" expanded="true" maxWidth="Infinity">
+        <content>
+            <GridPane hgap="10" vgap="5" style="-fx-padding: 10;">
+                <columnConstraints>
+                    <ColumnConstraints halignment="RIGHT" minWidth="120" />
+                    <ColumnConstraints hgrow="ALWAYS" />
+                </columnConstraints>
+                <!-- Summary: Product Name -->
+                <Label text="Product Name:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                <Label fx:id="summaryProductName" GridPane.rowIndex="0" GridPane.columnIndex="1" text="—" />
+
+                <!-- Summary: Product Type -->
+                <Label text="Type:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                <Label fx:id="summaryProductType" GridPane.rowIndex="1" GridPane.columnIndex="1" text="—" />
+
+                <!-- Summary: Batch Quantity -->
+                <Label text="Batch Quantity:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                <Label fx:id="summaryBatchQuantity" GridPane.rowIndex="2" GridPane.columnIndex="1" text="—" />
+
+                <!-- Summary: Supplier -->
+                <Label text="Supplier:" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+                <Label fx:id="summarySupplier" GridPane.rowIndex="3" GridPane.columnIndex="1" text="—" />
+
+                <!-- Summary: Purchase Price -->
+                <Label text="Purchase Price:" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+                <Label fx:id="summaryPurchasePrice" GridPane.rowIndex="4" GridPane.columnIndex="1" text="—" />
+
+                <!-- Summary: Retail Price -->
+                <Label text="Retail Price:" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+                <Label fx:id="summaryRetailPrice" GridPane.rowIndex="5" GridPane.columnIndex="1" text="—" />
+
+                <!-- Summary: Unit Profit -->
+                <Label text="Unit Profit:" GridPane.rowIndex="6" GridPane.columnIndex="0"/>
+                <Label fx:id="summaryUnitProfit" GridPane.rowIndex="6" GridPane.columnIndex="1" text="—" />
+
+                <!-- Summary: Total Batch Cost -->
+                <Label text="Total Batch Cost:" GridPane.rowIndex="7" GridPane.columnIndex="0"/>
+                <Label fx:id="summaryBatchCost" GridPane.rowIndex="7" GridPane.columnIndex="1" text="—" />
+
+                <!-- Summary: Total Potential Profit -->
+                <Label text="Total Potential Profit:" GridPane.rowIndex="8" GridPane.columnIndex="0"/>
+                <Label fx:id="summaryTotalProfit" GridPane.rowIndex="8" GridPane.columnIndex="1" text="—" />
+            </GridPane>
+        </content>
+    </TitledPane>
+
+</VBox>

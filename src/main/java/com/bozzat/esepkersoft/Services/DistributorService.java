@@ -81,7 +81,7 @@ public class DistributorService {
         );
     }
 
-    public List<Distributor> getAllDistributors() {
+    public static List<Distributor> getAllDistributors() {
         String query = "SELECT * FROM distributors ORDER BY name";
         List<Map<String, Object>> results = db.executeGet(query);
 

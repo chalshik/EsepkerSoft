@@ -13,9 +13,8 @@ public class Product {
 
     public Product() {}
 
-    public Product(int id, String name, String barcode, int categoryId, 
+    public Product( String name, String barcode, int categoryId,
                   String unitType, double currentPrice) {
-        this.id = id;
         this.name = name;
         this.barcode = barcode;
         this.categoryId = categoryId;
