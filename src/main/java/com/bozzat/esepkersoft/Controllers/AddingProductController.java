@@ -68,7 +68,6 @@ public class AddingProductController {
         summaryBatchCost.textProperty().bind(viewModel.totalBatchCostProperty().asString());
         summaryTotalProfit.textProperty().bind(viewModel.totalPotentialProfitProperty().asString());
 
-        viewModel.loadSuppliers();
         supplierCombo.setItems(viewModel.getSupplierList());
         productTypeCombo.getItems().addAll("piece", "kg");
     }

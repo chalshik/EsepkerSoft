@@ -13,13 +13,11 @@ public class StockEntry {
 
     public StockEntry() {}
 
-    public StockEntry(int productId, double quantity, double purchasePrice, 
-                     int supplierId, String note) {
-        this.productId = productId;
+    public StockEntry(double quantity, double purchasePrice,
+                     int supplierId) {
         this.quantity = quantity;
         this.purchasePrice = purchasePrice;
         this.supplierId = supplierId;
-        this.note = note;
         this.arrivalDate = LocalDateTime.now();
     }
 
