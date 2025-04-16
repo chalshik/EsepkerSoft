@@ -2,13 +2,14 @@ package com.bozzat.esepkersoft.Services;
 
 import com.bozzat.esepkersoft.Models.Product;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
 public class ProductService {
-    private dbManager db = dbManager.getInstance();
+    private final dbManager db = dbManager.getInstance();
 
-    public  Product getProductByBarcode(String barcode) {
+    public Product getProductByBarcode(String barcode) {
         if (barcode == null || barcode.trim().isEmpty()) {
             return null;
         }
@@ -21,31 +22,35 @@ public class ProductService {
         }
 
         Map<String, Object> productData = results.get(0);
-        return new Product(
-                ((Number) productData.get("id")).intValue(),
-                (String) productData.get("name"),
-                (String) productData.get("barcode"),
-                0, // default categoryId
-                (String) productData.get("unit_type"),
-                ((Number) productData.get("current_price")).doubleValue()
-        );
+        Product product = new Product();
+        product.setId(((Number) productData.get("id")).intValue());
+        product.setName((String) productData.get("name"));
+        product.setBarcode((String) productData.get("barcode"));
+        product.setCategoryId(((Number) productData.get("category_id")).intValue());
+        product.setUnitType((String) productData.get("unit_type"));
+        product.setCurrentPrice(((Number) productData.get("current_price")).doubleValue());
+        product.setCreatedAt(LocalDateTime.parse((String) productData.get("created_at")));
+        
+        return product;
     }
 
     public boolean addProduct(Product product) {
         if (product == null ||
                 product.getBarcode() == null || product.getBarcode().trim().isEmpty() ||
                 product.getName() == null || product.getName().trim().isEmpty() ||
+                product.getUnitType() == null || product.getUnitType().trim().isEmpty() ||
                 product.getCurrentPrice() <= 0) {
             return false;
         }
 
         String query = "INSERT INTO products " +
-                "(barcode, name, unit_type, current_price) " +
-                "VALUES (?, ?, ?, ?)";
+                "(name, barcode, category_id, unit_type, current_price) " +
+                "VALUES (?, ?, ?, ?, ?)";
 
         return db.executeSet(query,
-                product.getBarcode().trim(),
                 product.getName().trim(),
+                product.getBarcode().trim(),
+                product.getCategoryId(),
                 product.getUnitType(),
                 product.getCurrentPrice()
         );
@@ -75,22 +80,39 @@ public class ProductService {
             return false;
         }
 
-        // First check if product exists in inventory
-        List<Map<String, Object>> inventoryCheck = db.executeGet(
-                "SELECT quantity FROM inventory WHERE product_id = ?",
-                productId
-        );
+        try {
+            // Start transaction
+            db.executeSet("BEGIN TRANSACTION");
 
-        if (!inventoryCheck.isEmpty()) {
-            double currentStock = ((Number) inventoryCheck.get(0).get("quantity")).doubleValue();
-            if (currentStock > 0) {
-                System.err.println("Cannot delete product with remaining stock");
-                return false;
+            // Check if product exists in stock_balances
+            List<Map<String, Object>> stockCheck = db.executeGet(
+                    "SELECT quantity FROM stock_balances WHERE product_id = ?",
+                    productId
+            );
+
+            if (!stockCheck.isEmpty()) {
+                double currentStock = ((Number) stockCheck.get(0).get("quantity")).doubleValue();
+                if (currentStock > 0) {
+                    System.err.println("Cannot delete product with remaining stock");
+                    db.executeSet("ROLLBACK");
+                    return false;
+                }
             }
-        }
 
-        // Delete product (cascade will handle inventory)
-        return db.executeSet("DELETE FROM products WHERE id = ?", productId);
+            // Delete the product (ON DELETE CASCADE will handle related records)
+            if (!db.executeSet("DELETE FROM products WHERE id = ?", productId)) {
+                throw new Exception("Failed to delete product");
+            }
+
+            // Commit transaction
+            db.executeSet("COMMIT");
+            return true;
+
+        } catch (Exception e) {
+            System.err.println("Product deletion failed: " + e.getMessage());
+            db.executeSet("ROLLBACK");
+            return false;
+        }
     }
 
     public List<Product> getAllProducts() {
@@ -98,49 +120,19 @@ public class ProductService {
         List<Map<String, Object>> results = db.executeGet(query);
 
         return results.stream()
-                .map(row -> new Product(
-                        ((Number) row.get("id")).intValue(),
-                        (String) row.get("name"),
-                        (String) row.get("barcode"),
-                        0, // default categoryId
-                        (String) row.get("unit_type"),
-                        ((Number) row.get("current_price")).doubleValue()
-                ))
+                .map(row -> {
+                    Product product = new Product();
+                    product.setId(((Number) row.get("id")).intValue());
+                    product.setName((String) row.get("name"));
+                    product.setBarcode((String) row.get("barcode"));
+                    product.setCategoryId(((Number) row.get("category_id")).intValue());
+                    product.setUnitType((String) row.get("unit_type"));
+                    product.setCurrentPrice(((Number) row.get("current_price")).doubleValue());
+                    product.setCreatedAt(LocalDateTime.parse((String) row.get("created_at")));
+                    return product;
+                })
                 .toList();
     }
 
-    public List<Product> searchProducts(String searchTerm) {
-        if (searchTerm == null || searchTerm.trim().isEmpty()) {
-            return getAllProducts();
-        }
 
-        String query = "SELECT * FROM products " +
-                "WHERE barcode LIKE ? OR name LIKE ? " +
-                "ORDER BY name";
-
-        String likeTerm = "%" + searchTerm.trim() + "%";
-        List<Map<String, Object>> results = db.executeGet(query, likeTerm, likeTerm);
-
-        return results.stream()
-                .map(row -> new Product(
-                        ((Number) row.get("id")).intValue(),
-                        (String) row.get("name"),
-                        (String) row.get("barcode"),
-                        0, // default categoryId
-                        (String) row.get("unit_type"),
-                        ((Number) row.get("current_price")).doubleValue()
-                ))
-                .toList();
-    }
-
-    public boolean updateProductPrice(long productId, double newPrice) {
-        if (productId <= 0 || newPrice <= 0) {
-            return false;
-        }
-
-        return db.executeSet(
-                "UPDATE products SET current_price = ? WHERE id = ?",
-                newPrice, productId
-        );
-    }
 }
