@@ -1,111 +1,108 @@
 package com.bozzat.esepkersoft.ViewModel;
 
-
 import com.bozzat.esepkersoft.Models.Product;
 import com.bozzat.esepkersoft.Models.StockEntry;
 import com.bozzat.esepkersoft.Models.Supplier;
 import com.bozzat.esepkersoft.Services.ProductService;
 import com.bozzat.esepkersoft.Services.SupplierService;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
-import javafx.collections.*;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.collections.ObservableMap;
+import javafx.concurrent.Service;
+import javafx.concurrent.Task;
 
 public class AddingProductViewModel {
-
-    // Input
-    private final StringProperty productBarcode = new SimpleStringProperty();
-    private Boolean existingProduct = false;
+    private final ObservableList<String> productTypes = FXCollections.observableArrayList("kg", "pc");
+    // Product information
+    private final StringProperty selectedProductType = new SimpleStringProperty();
+    private final StringProperty barcodeField = new SimpleStringProperty();
     private final StringProperty productName = new SimpleStringProperty();
-    private final StringProperty productType = new SimpleStringProperty();
-    private final IntegerProperty batchQuantity = new SimpleIntegerProperty();
-    private final ObjectProperty<Supplier> supplier = new SimpleObjectProperty<Supplier>();
-    private final DoubleProperty purchasePrice = new SimpleDoubleProperty();
     private final DoubleProperty retailPrice = new SimpleDoubleProperty();
+    // Batch Information
+    private final DoubleProperty batchQuantity = new SimpleDoubleProperty();
+    private final DoubleProperty purchasePrice = new SimpleDoubleProperty();
+    private final ObjectProperty<Supplier> selectedSupplier= new SimpleObjectProperty<>();
+    private final ObjectProperty<BarcodeStatus> barcodeStatus = new SimpleObjectProperty<>();
+    private final ObjectProperty<Product> currentProduct = new SimpleObjectProperty<>();
 
-    // Computed properties
-    private final ReadOnlyDoubleWrapper unitProfit = new ReadOnlyDoubleWrapper();
-    private final ReadOnlyDoubleWrapper totalBatchCost = new ReadOnlyDoubleWrapper();
-    private final ReadOnlyDoubleWrapper totalPotentialProfit = new ReadOnlyDoubleWrapper();
+    // Editability properties
+    private final BooleanProperty productNameEditable = new SimpleBooleanProperty(true);
+    private final BooleanProperty productTypeSelectionDisabled = new SimpleBooleanProperty(false);
+    private final BooleanProperty productRetailPriceEditable = new SimpleBooleanProperty(true);
 
-    // Message property to display validation or success messages
-    private final StringProperty message = new SimpleStringProperty();
-    private SupplierService supplierService = new SupplierService();
 
-    // List of suppliers for the ComboBox
-    private final ObservableList<Supplier> supplierList = FXCollections.observableList(supplierService.getAllSuppliers());
-    // Models
-    private Product product = new Product();
+
 
     // Services
-    private ProductService productService = new ProductService();
+    SupplierService supplierService = new SupplierService();
+    ProductService productService = new ProductService();
+    private final ObservableList<Supplier> suppliers = FXCollections.observableList(supplierService.getAllSuppliers());
 
     public AddingProductViewModel() {
-        // Bind computed properties: these update automatically when the related properties change.
-        unitProfit.bind(retailPrice.subtract(purchasePrice));
-        totalBatchCost.bind(purchasePrice.multiply(batchQuantity));
-        totalPotentialProfit.bind(unitProfit.multiply(batchQuantity));
+        initializeListeners();
     }
+
+    private void initializeListeners() {
+        barcodeStatus.addListener((obs, oldV, newV) -> {
+            updateFields(newV);
+        });
+    }
+    private void updateFields(BarcodeStatus barcodeStatus) {
+
+    }
+
 
     public void searchProduct() {
-        product = productService.getProductByBarcode(productBarcode.get());
-        if (product == null) {
-            existingProduct = false;
-        } else {
-            existingProduct = true;
+        Product product = productService.getProductByBarcode(barcodeField.get());
+        barcodeStatus.set(BarcodeStatus.INITIAL);
+        if (product != null) {
+            barcodeStatus.set(BarcodeStatus.FOUND);
+            currentProduct.set(product);
             productName.set(product.getName());
-            productType.set(product.getUnitType());
+            selectedProductType.set(product.getUnitType());
             retailPrice.set(product.getCurrentPrice());
-        }
-    }
-
-    public void registerBatch() {
-        if (existingProduct) {
-            Integer id = (supplier.get() != null) ? supplier.get().getId() : null;
-            int supplierId = (id != null) ? id : -1;
-
-            StockEntry stockEntry = new StockEntry(
-                    batchQuantity.get(),
-                    purchasePrice.get(),
-                    supplierId
-            );
-            productService.addBatchEntry(product, stockEntry);
+            setEditableFalse();
         } else {
-            product = new Product(
-                    productName.get(),
-                    productBarcode.get(),
-                    productType.get(),
-                    retailPrice.get()
-            );
-            Integer id = (supplier.get() != null) ? supplier.get().getId() : null;
-            int supplierId = (id != null) ? id : -1;
-
-            StockEntry stockEntry = new StockEntry(
-                    batchQuantity.get(),
-                    purchasePrice.get(),
-                    supplierId
-            );
-            productService.registerNewProduct(product, stockEntry);
+            barcodeStatus.set(BarcodeStatus.NEW);
+            clearProductInformationFields();
+            setEditableTrue();
+            currentProduct.set(null);
         }
     }
 
-
-    private void newProductBatch() {
-
-    }
-    // Getters for input properties
-    public StringProperty productNameProperty() {
-        return productName;
+    public void clearProductInformationFields() {
+        selectedProductType.set("");
+        productName.set("");
+        retailPrice.set(0.0);
     }
 
-    public StringProperty productTypeProperty() {
-        return productType;
+    public void setEditableTrue() {
+        productNameEditable.set(true);
+        productTypeSelectionDisabled.set(false);
+        productRetailPriceEditable.set(true);
     }
 
-    public IntegerProperty batchQuantityProperty() {
-        return batchQuantity;
+
+    public void setEditableFalse() {
+        productNameEditable.set(false);
+        productTypeSelectionDisabled.set(true);
+        productRetailPriceEditable.set(false);
     }
 
-    public ObjectProperty<Supplier> supplierProperty() {
-        return supplier;
+    public ObjectProperty<BarcodeStatus> barcodeStatusProperty() {
+        return barcodeStatus;
+    }
+    public ObjectProperty<Supplier> selectedSupplierProperty() {
+        return selectedSupplier;
+    }
+
+    public ObservableList<Supplier> getSuppliers() {
+        return suppliers;
+    }
+    public StringProperty barcodeFieldProperty() {
+        return barcodeField;
     }
 
     public DoubleProperty purchasePriceProperty() {
@@ -116,67 +113,31 @@ public class AddingProductViewModel {
         return retailPrice;
     }
 
-    // Getters for computed properties
-    public ReadOnlyDoubleProperty unitProfitProperty() {
-        return unitProfit.getReadOnlyProperty();
+    public DoubleProperty batchQuantityProperty() {
+        return batchQuantity;
     }
 
-    public ReadOnlyDoubleProperty totalBatchCostProperty() {
-        return totalBatchCost.getReadOnlyProperty();
+    public StringProperty productNameProperty() {
+        return productName;
+    }
+    public StringProperty selectedProductTypeProperty() {
+        return selectedProductType;
     }
 
-    public ReadOnlyDoubleProperty totalPotentialProfitProperty() {
-        return totalPotentialProfit.getReadOnlyProperty();
+    public ObservableList<String> getProductTypes() {
+        return productTypes;
+    }
+    // Getters
+    public BooleanProperty productNameEditableProperty() {
+        return productNameEditable;
     }
 
-    // Message property: used to display errors or success messages.
-    public StringProperty messageProperty() {
-        return message;
+    public BooleanProperty productTypeSelectionDisabledProperty() {
+        return productTypeSelectionDisabled;
     }
 
-    public void setMessage(String msg) {
-        message.set(msg);
+    public BooleanProperty productRetailPriceEditableProperty() {
+        return productRetailPriceEditable;
     }
 
-    // Supplier list methods
-    public ObservableList<Supplier> getSupplierList() {
-        return supplierList;
-    }
-
-
-    // The method called from the controller on form submission.
-    // It performs basic validation and updates the message accordingly.
-    public void submitForm() {
-        // Validate Product Name
-        if (productName.get() == null || productName.get().trim().isEmpty()) {
-            setMessage("Product name is required!");
-            return;
-        }
-        // Validate Batch Quantity
-        if (batchQuantity.get() <= 0) {
-            setMessage("Batch quantity must be greater than 0!");
-            return;
-        }
-        // Validate Purchase Price
-        if (purchasePrice.get() <= 0) {
-            setMessage("Please enter a valid purchase price!");
-            return;
-        }
-        // Validate Retail Price
-        if (retailPrice.get() <= 0) {
-            setMessage("Please enter a valid retail price!");
-            return;
-        }
-        // All validations passed; report success.
-        setMessage("Product batch registered successfully!");
-        // Optionally, you can reset properties here if desired.
-    }
-
-    public String getProductBarcode() {
-        return productBarcode.get();
-    }
-
-    public StringProperty productBarcodeProperty() {
-        return productBarcode;
-    }
 }
