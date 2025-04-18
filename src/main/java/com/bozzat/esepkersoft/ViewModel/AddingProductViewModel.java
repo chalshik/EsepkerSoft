@@ -5,34 +5,43 @@ import com.bozzat.esepkersoft.Models.StockEntry;
 import com.bozzat.esepkersoft.Models.Supplier;
 import com.bozzat.esepkersoft.Services.ProductService;
 import com.bozzat.esepkersoft.Services.SupplierService;
-import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.collections.ObservableMap;
-import javafx.concurrent.Service;
-import javafx.concurrent.Task;
 
 public class AddingProductViewModel {
+    // Constants & Collections ======================================================
     private final ObservableList<String> productTypes = FXCollections.observableArrayList("kg", "pc");
-    // Product information
+    private final ObservableList<Supplier> suppliers = FXCollections.observableList(
+            new SupplierService().getAllSuppliers()
+    );
+
+    // Service Dependencies =========================================================
+    private final ProductService productService = new ProductService();
+    private final SupplierService supplierService = new SupplierService();
+
+    // Data Properties ==============================================================
+    // Product Information
     private final StringProperty selectedProductType = new SimpleStringProperty();
     private final StringProperty barcodeField = new SimpleStringProperty();
     private final StringProperty productName = new SimpleStringProperty();
     private final DoubleProperty retailPrice = new SimpleDoubleProperty();
+
     // Batch Information
     private final DoubleProperty batchQuantity = new SimpleDoubleProperty();
     private final DoubleProperty purchasePrice = new SimpleDoubleProperty();
-    private final ObjectProperty<Supplier> selectedSupplier= new SimpleObjectProperty<>();
+    private final ObjectProperty<Supplier> selectedSupplier = new SimpleObjectProperty<>();
+
+    // State Properties =============================================================
     private final ObjectProperty<BarcodeStatus> barcodeStatus = new SimpleObjectProperty<>();
     private final ObjectProperty<Product> currentProduct = new SimpleObjectProperty<>();
 
-    // Editability properties
+    // Editability Properties
     private final BooleanProperty productNameEditable = new SimpleBooleanProperty(true);
     private final BooleanProperty productTypeSelectionDisabled = new SimpleBooleanProperty(false);
     private final BooleanProperty productRetailPriceEditable = new SimpleBooleanProperty(true);
 
-    // Error properties
+    // Error Properties
     private final BooleanProperty barcodeError = new SimpleBooleanProperty();
     private final BooleanProperty productNameError = new SimpleBooleanProperty();
     private final BooleanProperty productTypeError = new SimpleBooleanProperty();
@@ -40,219 +49,178 @@ public class AddingProductViewModel {
     private final BooleanProperty batchQuantityError = new SimpleBooleanProperty();
     private final BooleanProperty purchasePriceError = new SimpleBooleanProperty();
 
-
-
-    // Services
-    SupplierService supplierService = new SupplierService();
-    ProductService productService = new ProductService();
-    private final ObservableList<Supplier> suppliers = FXCollections.observableList(supplierService.getAllSuppliers());
-
+    // Constructor & Initialization =================================================
     public AddingProductViewModel() {
         initializeListeners();
     }
 
     private void initializeListeners() {
-        barcodeStatus.addListener((obs, oldV, newV) -> {
-            updateFields(newV);
-        });
-    }
-    private void updateFields(BarcodeStatus barcodeStatus) {
-
+        barcodeStatus.addListener((obs, oldV, newV) -> updateFields(newV));
     }
 
-
-
-
+    // Core Functionality ===========================================================
     public void searchProduct() {
         Product product = productService.getProductByBarcode(barcodeField.get());
         barcodeStatus.set(BarcodeStatus.INITIAL);
+
         if (product != null) {
-            barcodeStatus.set(BarcodeStatus.FOUND);
-            currentProduct.set(product);
-            productName.set(product.getName());
-            selectedProductType.set(product.getUnitType());
-            retailPrice.set(product.getCurrentPrice());
-            setEditableFalse();
+            handleExistingProduct(product);
         } else {
-            barcodeStatus.set(BarcodeStatus.NEW);
-            clearProductInformationFields();
-            setEditableTrue();
-            currentProduct.set(null);
+            handleNewProduct();
         }
     }
 
     public void registerBatch() {
-        Integer supplierId = selectedSupplier.get() != null ? selectedSupplier.get().getId() : null;
-        if (validateFields()) {
-            if (currentProduct.get() != null) {
-                System.out.println(currentProduct);
-                StockEntry stockEntry = new StockEntry(batchQuantity.get(), purchasePrice.get(), supplierId);
-                productService.addBatchEntry(currentProduct.get()
-                        , stockEntry);
-                System.out.println("almost success");
-            } else {
-                StockEntry stockEntry = new StockEntry(batchQuantity.get(), purchasePrice.get(), supplierId);
-                Product newProduct = new Product(productName.get(), barcodeField.get(), selectedProductType.get(), retailPrice.get());
-                productService.registerNewProduct(newProduct, stockEntry);
-            }
+        if (!validateFields()) return;
+
+        Integer supplierId = selectedSupplier.get() != null
+                ? selectedSupplier.get().getId()
+                : null;
+        StockEntry stockEntry = new StockEntry(
+                batchQuantity.get(),
+                purchasePrice.get(),
+                supplierId
+        );
+
+        if (currentProduct.get() != null) {
+            productService.addBatchEntry(currentProduct.get(), stockEntry);
         } else {
-
+            Product newProduct = new Product(
+                    productName.get(),
+                    barcodeField.get(),
+                    selectedProductType.get(),
+                    retailPrice.get()
+            );
+            productService.registerNewProduct(newProduct, stockEntry);
         }
+        clearFields();
     }
 
-    private boolean validateFields() {
-        boolean hasError = false;
+    // State Management =============================================================
+    public void clearFields() {
+        // Product Information
+        selectedProductType.set(null);
+        barcodeField.set("");
+        productName.set("");
+        retailPrice.set(0.0);
 
-        // Barcode field
-        boolean isBarcodeEmpty = barcodeField.get() == null || barcodeField.get().trim().isEmpty();
-        barcodeError.set(isBarcodeEmpty);
-        hasError |= isBarcodeEmpty;
+        // Batch Information
+        batchQuantity.set(0.0);
+        purchasePrice.set(0.0);
+        selectedSupplier.set(null);
 
-        // Product name
-        boolean isProductNameEmpty = productName.get() == null || productName.get().trim().isEmpty();
-        productNameError.set(isProductNameEmpty);
-        hasError |= isProductNameEmpty;
+        // System State
+        barcodeStatus.set(BarcodeStatus.INITIAL);
+        currentProduct.set(null);
 
-        // Product type
-        boolean isProductTypeEmpty = selectedProductType.get() == null || selectedProductType.get().trim().isEmpty();
-        productTypeError.set(isProductTypeEmpty);
-        hasError |= isProductTypeEmpty;
+        // Editability
+        resetEditability();
 
-        // Retail price
-        boolean isRetailPriceInvalid = retailPrice.get() <= 0;
-        retailPriceError.set(isRetailPriceInvalid);
-        hasError |= isRetailPriceInvalid;
-
-        // Batch quantity
-        boolean isBatchQuantityInvalid = batchQuantity.get() <= 0;
-        batchQuantityError.set(isBatchQuantityInvalid);
-        hasError |= isBatchQuantityInvalid;
-
-        // Purchase price
-        boolean isPurchasePriceInvalid = purchasePrice.get() <= 0;
-        purchasePriceError.set(isPurchasePriceInvalid);
-        hasError |= isPurchasePriceInvalid;
-
-        return !hasError;
+        // Errors
+        resetErrors();
     }
 
-
-    public void clearProductInformationFields() {
+    private void clearProductInformationFields() {
         selectedProductType.set("");
         productName.set("");
         retailPrice.set(0.0);
     }
 
-    public void setEditableTrue() {
+    // Validation ===================================================================
+    private boolean validateFields() {
+        boolean hasError = false;
+
+        hasError |= checkEmpty(barcodeField, barcodeError);
+        hasError |= checkEmpty(productName, productNameError);
+        hasError |= checkEmpty(selectedProductType, productTypeError);
+        hasError |= checkPositive(retailPrice, retailPriceError);
+        hasError |= checkPositive(batchQuantity, batchQuantityError);
+        hasError |= checkPositive(purchasePrice, purchasePriceError);
+
+        return !hasError;
+    }
+
+    private boolean checkEmpty(StringProperty prop, BooleanProperty error) {
+        boolean isEmpty = prop.get() == null || prop.get().trim().isEmpty();
+        error.set(isEmpty);
+        return isEmpty;
+    }
+
+    private boolean checkPositive(DoubleProperty prop, BooleanProperty error) {
+        boolean isInvalid = prop.get() <= 0;
+        error.set(isInvalid);
+        return isInvalid;
+    }
+
+    // Editability Management ========================================================
+    private void setEditableTrue() {
         productNameEditable.set(true);
         productTypeSelectionDisabled.set(false);
         productRetailPriceEditable.set(true);
     }
 
-
-    public void setEditableFalse() {
+    private void setEditableFalse() {
         productNameEditable.set(false);
         productTypeSelectionDisabled.set(true);
         productRetailPriceEditable.set(false);
     }
 
-
-    // getters
-
-    public ObjectProperty<BarcodeStatus> barcodeStatusProperty() {
-        return barcodeStatus;
-    }
-    public ObjectProperty<Supplier> selectedSupplierProperty() {
-        return selectedSupplier;
+    private void resetEditability() {
+        productNameEditable.set(true);
+        productTypeSelectionDisabled.set(false);
+        productRetailPriceEditable.set(true);
     }
 
-    public ObservableList<Supplier> getSuppliers() {
-        return suppliers;
-    }
-    public StringProperty barcodeFieldProperty() {
-        return barcodeField;
-    }
-
-    public DoubleProperty purchasePriceProperty() {
-        return purchasePrice;
-    }
-
-    public DoubleProperty retailPriceProperty() {
-        return retailPrice;
+    // Helper Methods ================================================================
+    private void handleExistingProduct(Product product) {
+        barcodeStatus.set(BarcodeStatus.FOUND);
+        currentProduct.set(product);
+        productName.set(product.getName());
+        selectedProductType.set(product.getUnitType());
+        retailPrice.set(product.getCurrentPrice());
+        setEditableFalse();
     }
 
-    public DoubleProperty batchQuantityProperty() {
-        return batchQuantity;
+    private void handleNewProduct() {
+        barcodeStatus.set(BarcodeStatus.NEW);
+        clearProductInformationFields();
+        setEditableTrue();
+        currentProduct.set(null);
     }
 
-    public StringProperty productNameProperty() {
-        return productName;
-    }
-    public StringProperty selectedProductTypeProperty() {
-        return selectedProductType;
+    private void updateFields(BarcodeStatus barcodeStatus) {
+        // Implementation pending
     }
 
-    public ObservableList<String> getProductTypes() {
-        return productTypes;
-    }
-    // Getters
-    public BooleanProperty productNameEditableProperty() {
-        return productNameEditable;
-    }
-
-    public BooleanProperty productTypeSelectionDisabledProperty() {
-        return productTypeSelectionDisabled;
+    private void resetErrors() {
+        barcodeError.set(false);
+        productNameError.set(false);
+        productTypeError.set(false);
+        retailPriceError.set(false);
+        batchQuantityError.set(false);
+        purchasePriceError.set(false);
     }
 
-    public BooleanProperty productRetailPriceEditableProperty() {
-        return productRetailPriceEditable;
-    }
+    // Property Accessors ============================================================
+    public ObjectProperty<BarcodeStatus> barcodeStatusProperty() { return barcodeStatus; }
+    public ObjectProperty<Supplier> selectedSupplierProperty() { return selectedSupplier; }
+    public StringProperty barcodeFieldProperty() { return barcodeField; }
+    public DoubleProperty purchasePriceProperty() { return purchasePrice; }
+    public DoubleProperty retailPriceProperty() { return retailPrice; }
+    public DoubleProperty batchQuantityProperty() { return batchQuantity; }
+    public StringProperty productNameProperty() { return productName; }
+    public StringProperty selectedProductTypeProperty() { return selectedProductType; }
+    public BooleanProperty productNameEditableProperty() { return productNameEditable; }
+    public BooleanProperty productTypeSelectionDisabledProperty() { return productTypeSelectionDisabled; }
+    public BooleanProperty productRetailPriceEditableProperty() { return productRetailPriceEditable; }
+    public BooleanProperty purchasePriceErrorProperty() { return purchasePriceError; }
+    public BooleanProperty batchQuantityErrorProperty() { return batchQuantityError; }
+    public BooleanProperty retailPriceErrorProperty() { return retailPriceError; }
+    public BooleanProperty productTypeErrorProperty() { return productTypeError; }
+    public BooleanProperty productNameErrorProperty() { return productNameError; }
+    public BooleanProperty barcodeErrorProperty() { return barcodeError; }
 
-    public boolean isPurchasePriceError() {
-        return purchasePriceError.get();
-    }
-
-    public BooleanProperty purchasePriceErrorProperty() {
-        return purchasePriceError;
-    }
-
-    public boolean isBatchQuantityError() {
-        return batchQuantityError.get();
-    }
-
-    public BooleanProperty batchQuantityErrorProperty() {
-        return batchQuantityError;
-    }
-
-    public boolean isRetailPriceError() {
-        return retailPriceError.get();
-    }
-
-    public BooleanProperty retailPriceErrorProperty() {
-        return retailPriceError;
-    }
-
-    public boolean isProductTypeError() {
-        return productTypeError.get();
-    }
-
-    public BooleanProperty productTypeErrorProperty() {
-        return productTypeError;
-    }
-
-    public boolean isProductNameError() {
-        return productNameError.get();
-    }
-
-    public BooleanProperty productNameErrorProperty() {
-        return productNameError;
-    }
-
-    public boolean isBarcodeError() {
-        return barcodeError.get();
-    }
-
-    public BooleanProperty barcodeErrorProperty() {
-        return barcodeError;
-    }
+    // Getters ======================================================================
+    public ObservableList<Supplier> getSuppliers() { return suppliers; }
+    public ObservableList<String> getProductTypes() { return productTypes; }
 }
