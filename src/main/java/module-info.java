@@ -9,7 +9,7 @@ module com.bozzat.esepkersoft {
     requires java.desktop;
     requires java.sql;
     requires jdk.incubator.vector;
-
+    
     opens com.bozzat.esepkersoft to javafx.fxml;
     exports com.bozzat.esepkersoft;
 
