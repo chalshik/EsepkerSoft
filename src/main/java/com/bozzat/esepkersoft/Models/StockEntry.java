@@ -7,14 +7,14 @@ public class StockEntry {
     private int productId;
     private double quantity;
     private double purchasePrice;
-    private int supplierId;
+    private Integer supplierId;
     private LocalDateTime arrivalDate;
     private String note;
 
     public StockEntry() {}
 
     public StockEntry(double quantity, double purchasePrice,
-                     int supplierId) {
+                     Integer supplierId) {
         this.quantity = quantity;
         this.purchasePrice = purchasePrice;
         this.supplierId = supplierId;
@@ -22,10 +22,10 @@ public class StockEntry {
     }
 
     // Getters and Setters
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
-    public int getProductId() { return productId; }
+    public Integer getProductId() { return productId; }
     public void setProductId(int productId) { this.productId = productId; }
 
     public double getQuantity() { return quantity; }
@@ -34,7 +34,7 @@ public class StockEntry {
     public double getPurchasePrice() { return purchasePrice; }
     public void setPurchasePrice(double purchasePrice) { this.purchasePrice = purchasePrice; }
 
-    public int getSupplierId() { return supplierId; }
+    public Integer getSupplierId() { return supplierId; }
     public void setSupplierId(int supplierId) { this.supplierId = supplierId; }
 
     public LocalDateTime getArrivalDate() { return arrivalDate; }

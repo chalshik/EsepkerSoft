@@ -47,7 +47,7 @@
                                 <TextField fx:id="productBarcodeField" promptText="Enter product barcode" styleClass="form-field" HBox.hgrow="ALWAYS" />
                                 <Label fx:id="barcodeStatusIcon" styleClass="status-icon" />
                             </HBox>
-                            <Label fx:id="barcodeHelperText" styleClass="helper-text" text="Enter barcode to search" />
+                            <Label fx:id="barcodeErrorLabel" styleClass="helper-text" text="Enter barcode to search" />
                         </VBox>
 
                         <!-- Product Name -->

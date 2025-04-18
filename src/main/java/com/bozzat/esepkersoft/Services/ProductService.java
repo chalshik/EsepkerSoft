@@ -241,7 +241,7 @@ public class ProductService {
         }
     }
 
-    private boolean addStockEntry(int productId, double quantity, double purchasePrice, int supplierId, String note) {
+    private boolean addStockEntry(int productId, double quantity, double purchasePrice, Integer supplierId, String note) {
         String query = "INSERT INTO stock_entries " +
                 "(product_id, quantity, purchase_price, supplier_id, arrival_date, note) " +
                 "VALUES (?, ?, ?, ?, datetime('now', 'localtime'), ?)";
@@ -325,6 +325,7 @@ public class ProductService {
 
             // Commit transaction
             db.executeSet("COMMIT");
+            System.out.println("Success");
             return createdProduct;
 
         } catch (Exception e) {

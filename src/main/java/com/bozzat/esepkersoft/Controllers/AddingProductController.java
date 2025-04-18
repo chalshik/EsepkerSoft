@@ -1,22 +1,15 @@
 package com.bozzat.esepkersoft.Controllers;
 
 import com.bozzat.esepkersoft.Models.Supplier;
-import com.bozzat.esepkersoft.Services.ProductService;
-import com.bozzat.esepkersoft.Services.SupplierService;
 import com.bozzat.esepkersoft.ViewModel.AddingProductViewModel;
 import com.bozzat.esepkersoft.ViewModel.BarcodeStatus;
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.Timeline;
-import javafx.beans.binding.Bindings;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.text.Text;
-import javafx.util.Duration;
 import javafx.util.StringConverter;
 import javafx.util.converter.NumberStringConverter;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
+import javafx.beans.property.*;
 
 public class AddingProductController {
     // Header UI Elements
@@ -26,24 +19,29 @@ public class AddingProductController {
     // Product Information Form Elements
     @FXML private Label barcodeStatusIcon;
     @FXML private TextField productBarcodeField;
-    @FXML private Label barcodeErrorLabel;
     @FXML private TextField productNameField;
-    @FXML private Label productNameErrorLabel;
     @FXML private ComboBox<String> productTypeCombo;
-    @FXML private Label productTypeErrorLabel;
     @FXML private TextField retailPriceField;
-    @FXML private Button editRetailPriceButton;
+    @FXML private TextField purchasePriceField;
+    @FXML private ComboBox<Supplier> supplierCombo;
+    @FXML private TextField batchQuantityField;
+
+    // errors
+    @FXML private Label productTypeErrorLabel;
     @FXML private Label retailPriceEmptyErrorLabel;
-    @FXML private Label retailPriceNonPositiveErrorLabel;
+    @FXML private Label barcodeErrorLabel;
+    @FXML private Label productNameErrorLabel;
+    @FXML private Label batchQuantityEmptyErrorLabel;
+    @FXML private Label purchasePriceEmptyErrorLabel;
 
     // Batch Information Form Elements
-    @FXML private TextField batchQuantityField;
-    @FXML private Label batchQuantityEmptyErrorLabel;
-    @FXML private Label batchQuantityNonPositiveErrorLabel;
-    @FXML private ComboBox<Supplier> supplierCombo;
-    @FXML private TextField purchasePriceField;
-    @FXML private Label purchasePriceEmptyErrorLabel;
-    @FXML private Label purchasePriceNonPositiveErrorLabel;
+
+
+
+
+
+    @FXML private Button editRetailPriceButton;
+
 
     // Summary Section Elements
     @FXML private Accordion advancedAccordion;
@@ -88,6 +86,63 @@ public class AddingProductController {
         });
 
         initializeBindings();
+        initializeErrorBindings();
+        submitButton.setOnAction(e -> {
+            addingProductViewModel.registerBatch();
+        });
+    }
+
+    public void initializeErrorBindings() {
+        // 1) Bind each Label’s visibility & managed to the corresponding error property
+        bindErrorLabel(barcodeErrorLabel,     addingProductViewModel.barcodeErrorProperty());
+        bindErrorLabel(productNameErrorLabel, addingProductViewModel.productNameErrorProperty());
+        bindErrorLabel(productTypeErrorLabel, addingProductViewModel.productTypeErrorProperty());
+        bindErrorLabel(retailPriceEmptyErrorLabel,  addingProductViewModel.retailPriceErrorProperty());
+        bindErrorLabel(batchQuantityEmptyErrorLabel, addingProductViewModel.batchQuantityErrorProperty());
+        bindErrorLabel(purchasePriceEmptyErrorLabel, addingProductViewModel.purchasePriceErrorProperty());
+
+        // 2) Bind each input’s style to its error property
+        bindErrorStyle(productBarcodeField, addingProductViewModel.barcodeErrorProperty());
+        bindErrorStyle(productNameField,   addingProductViewModel.productNameErrorProperty());
+        bindErrorStyle(productTypeCombo,   addingProductViewModel.productTypeErrorProperty());
+        bindErrorStyle(retailPriceField,   addingProductViewModel.retailPriceErrorProperty());
+        bindErrorStyle(batchQuantityField, addingProductViewModel.batchQuantityErrorProperty());
+        bindErrorStyle(purchasePriceField, addingProductViewModel.purchasePriceErrorProperty());
+        bindErrorStyle(supplierCombo,      addingProductViewModel.productTypeErrorProperty()); // or supplierError if you add one
+
+        // 3) When any field changes, clear its error flag
+        productBarcodeField.textProperty()
+                .addListener((obs, old, neu) -> addingProductViewModel.barcodeErrorProperty().set(false));
+        productNameField.textProperty()
+                .addListener((obs, old, neu) -> addingProductViewModel.productNameErrorProperty().set(false));
+        productTypeCombo.valueProperty()
+                .addListener((obs, old, neu) -> addingProductViewModel.productTypeErrorProperty().set(false));
+        retailPriceField.textProperty()
+                .addListener((obs, old, neu) -> addingProductViewModel.retailPriceErrorProperty().set(false));
+        batchQuantityField.textProperty()
+                .addListener((obs, old, neu) -> addingProductViewModel.batchQuantityErrorProperty().set(false));
+        purchasePriceField.textProperty()
+                .addListener((obs, old, neu) -> addingProductViewModel.purchasePriceErrorProperty().set(false));
+        supplierCombo.valueProperty()
+                .addListener((obs, old, neu) -> addingProductViewModel.productTypeErrorProperty().set(false)); // adjust if you have supplierError
+    }
+
+    private void bindErrorLabel(Label lbl, BooleanProperty errorProp) {
+        // visible only when errorProp is true, and "managed" so layout hides it completely
+        lbl.visibleProperty().bind(errorProp);
+        lbl.managedProperty().bind(errorProp);
+    }
+
+    private void bindErrorStyle(Control ctl, BooleanProperty errorProp) {
+        // toggle the .error-field style class
+        errorProp.addListener((obs, wasErr, isErr) -> {
+            ObservableList<String> styles = ctl.getStyleClass();
+            if (isErr) {
+                if (!styles.contains("error-field")) styles.add("error-field");
+            } else {
+                styles.remove("error-field");
+            }
+        });
     }
 
     private void searchBarcode() {

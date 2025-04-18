@@ -32,6 +32,13 @@ public class AddingProductViewModel {
     private final BooleanProperty productTypeSelectionDisabled = new SimpleBooleanProperty(false);
     private final BooleanProperty productRetailPriceEditable = new SimpleBooleanProperty(true);
 
+    // Error properties
+    private final BooleanProperty barcodeError = new SimpleBooleanProperty();
+    private final BooleanProperty productNameError = new SimpleBooleanProperty();
+    private final BooleanProperty productTypeError = new SimpleBooleanProperty();
+    private final BooleanProperty retailPriceError = new SimpleBooleanProperty();
+    private final BooleanProperty batchQuantityError = new SimpleBooleanProperty();
+    private final BooleanProperty purchasePriceError = new SimpleBooleanProperty();
 
 
 
@@ -54,6 +61,8 @@ public class AddingProductViewModel {
     }
 
 
+
+
     public void searchProduct() {
         Product product = productService.getProductByBarcode(barcodeField.get());
         barcodeStatus.set(BarcodeStatus.INITIAL);
@@ -71,6 +80,62 @@ public class AddingProductViewModel {
             currentProduct.set(null);
         }
     }
+
+    public void registerBatch() {
+        Integer supplierId = selectedSupplier.get() != null ? selectedSupplier.get().getId() : null;
+        if (validateFields()) {
+            if (currentProduct.get() != null) {
+                System.out.println(currentProduct);
+                StockEntry stockEntry = new StockEntry(batchQuantity.get(), purchasePrice.get(), supplierId);
+                productService.addBatchEntry(currentProduct.get()
+                        , stockEntry);
+                System.out.println("almost success");
+            } else {
+                StockEntry stockEntry = new StockEntry(batchQuantity.get(), purchasePrice.get(), supplierId);
+                Product newProduct = new Product(productName.get(), barcodeField.get(), selectedProductType.get(), retailPrice.get());
+                productService.registerNewProduct(newProduct, stockEntry);
+            }
+        } else {
+
+        }
+    }
+
+    private boolean validateFields() {
+        boolean hasError = false;
+
+        // Barcode field
+        boolean isBarcodeEmpty = barcodeField.get() == null || barcodeField.get().trim().isEmpty();
+        barcodeError.set(isBarcodeEmpty);
+        hasError |= isBarcodeEmpty;
+
+        // Product name
+        boolean isProductNameEmpty = productName.get() == null || productName.get().trim().isEmpty();
+        productNameError.set(isProductNameEmpty);
+        hasError |= isProductNameEmpty;
+
+        // Product type
+        boolean isProductTypeEmpty = selectedProductType.get() == null || selectedProductType.get().trim().isEmpty();
+        productTypeError.set(isProductTypeEmpty);
+        hasError |= isProductTypeEmpty;
+
+        // Retail price
+        boolean isRetailPriceInvalid = retailPrice.get() <= 0;
+        retailPriceError.set(isRetailPriceInvalid);
+        hasError |= isRetailPriceInvalid;
+
+        // Batch quantity
+        boolean isBatchQuantityInvalid = batchQuantity.get() <= 0;
+        batchQuantityError.set(isBatchQuantityInvalid);
+        hasError |= isBatchQuantityInvalid;
+
+        // Purchase price
+        boolean isPurchasePriceInvalid = purchasePrice.get() <= 0;
+        purchasePriceError.set(isPurchasePriceInvalid);
+        hasError |= isPurchasePriceInvalid;
+
+        return !hasError;
+    }
+
 
     public void clearProductInformationFields() {
         selectedProductType.set("");
@@ -90,6 +155,9 @@ public class AddingProductViewModel {
         productTypeSelectionDisabled.set(true);
         productRetailPriceEditable.set(false);
     }
+
+
+    // getters
 
     public ObjectProperty<BarcodeStatus> barcodeStatusProperty() {
         return barcodeStatus;
@@ -140,4 +208,51 @@ public class AddingProductViewModel {
         return productRetailPriceEditable;
     }
 
+    public boolean isPurchasePriceError() {
+        return purchasePriceError.get();
+    }
+
+    public BooleanProperty purchasePriceErrorProperty() {
+        return purchasePriceError;
+    }
+
+    public boolean isBatchQuantityError() {
+        return batchQuantityError.get();
+    }
+
+    public BooleanProperty batchQuantityErrorProperty() {
+        return batchQuantityError;
+    }
+
+    public boolean isRetailPriceError() {
+        return retailPriceError.get();
+    }
+
+    public BooleanProperty retailPriceErrorProperty() {
+        return retailPriceError;
+    }
+
+    public boolean isProductTypeError() {
+        return productTypeError.get();
+    }
+
+    public BooleanProperty productTypeErrorProperty() {
+        return productTypeError;
+    }
+
+    public boolean isProductNameError() {
+        return productNameError.get();
+    }
+
+    public BooleanProperty productNameErrorProperty() {
+        return productNameError;
+    }
+
+    public boolean isBarcodeError() {
+        return barcodeError.get();
+    }
+
+    public BooleanProperty barcodeErrorProperty() {
+        return barcodeError;
+    }
 }
