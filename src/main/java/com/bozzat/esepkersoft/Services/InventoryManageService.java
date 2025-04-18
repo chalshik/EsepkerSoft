@@ -1,5 +1,4 @@
 package com.bozzat.esepkersoft.Services;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,19 +9,24 @@ public class InventoryManageService {
     private final dbManager db = dbManager.getInstance();
     
     /**
-     * Returns all products with their current stock balances
-     * @return List of Maps containing complete product and stock information
+     * Returns inventory information with only essential fields:
+     * - Product name
+     * - Current price
+     * - Stock quantity
+     * - Unit type
+     * - Last batch date (most recent stock entry)
+     * 
+     * @param ascending If true, sorts in ascending order; if false, sorts in descending order
+     * @return List of Maps containing simplified inventory information
      */
-    public List<Map<String, Object>> getInventory() {
+    public List<Map<String, Object>> getInventory(boolean ascending) {
         String query = "SELECT " +
-                "p.id, p.name, p.barcode, p.category_id, p.unit_type, " +
-                "p.current_price, p.created_at, " +
+                "p.id, p.name, p.current_price, p.unit_type, " +
                 "COALESCE(sb.quantity, 0) as stock_quantity, " +
-                "c.name as category_name " +
+                "(SELECT MAX(se.arrival_date) FROM stock_entries se WHERE se.product_id = p.id) as last_batch_date " +
                 "FROM products p " +
                 "LEFT JOIN stock_balances sb ON p.id = sb.product_id " +
-                "LEFT JOIN categories c ON p.category_id = c.id " +
-                "ORDER BY p.name";
+                "ORDER BY p.name " + (ascending ? "ASC" : "DESC");
                 
         List<Map<String, Object>> results = db.executeGet(query);
         List<Map<String, Object>> inventory = new ArrayList<>();
@@ -30,36 +34,91 @@ public class InventoryManageService {
         for (Map<String, Object> row : results) {
             Map<String, Object> item = new HashMap<>();
             
-            // Product details
-            item.put("id", ((Number) row.get("id")).intValue());
+            // Essential product info
             item.put("name", (String) row.get("name"));
-            item.put("barcode", (String) row.get("barcode"));
-            
-            // Category information
-            if (row.get("category_id") != null) {
-                item.put("categoryId", ((Number) row.get("category_id")).intValue());
-                item.put("categoryName", row.get("category_name"));
-            } else {
-                item.put("categoryId", 0);
-                item.put("categoryName", "");
-            }
-            
-            // Product attributes
             item.put("unitType", (String) row.get("unit_type"));
             item.put("currentPrice", ((Number) row.get("current_price")).doubleValue());
             
             // Stock quantity
             double quantity = ((Number) row.get("stock_quantity")).doubleValue();
-            item.put("stockQuantity", quantity);
+            item.put("quantityInStock", quantity);
             
-            // Timestamps
-            if (row.get("created_at") != null) {
-                item.put("createdAt", (String) row.get("created_at"));
+            // Last batch date
+            if (row.get("last_batch_date") != null) {
+                item.put("lastBatchDate", (String) row.get("last_batch_date"));
+            } else {
+                item.put("lastBatchDate", "");
             }
             
             inventory.add(item);
         }
         
         return inventory;
+    }
+    
+    /**
+     * Overloaded method that defaults to ascending order
+     * @return List of Maps containing simplified inventory information
+     */
+    public List<Map<String, Object>> getInventory() {
+        return getInventory(true);
+    }
+    
+    /**
+     * Returns inventory information filtered by category ID
+     * 
+     * @param categoryId The category ID to filter by
+     * @param ascending If true, sorts in ascending order; if false, sorts in descending order
+     * @return List of Maps containing inventory information for the specified category
+     */
+    public List<Map<String, Object>> getInventoryByCategory(int categoryId, boolean ascending) {
+        if (categoryId <= 0) {
+            return getInventory(ascending); // Return all inventory if invalid category ID
+        }
+        
+        String query = "SELECT " +
+                "p.id, p.name, p.current_price, p.unit_type, " +
+                "COALESCE(sb.quantity, 0) as stock_quantity, " +
+                "(SELECT MAX(se.arrival_date) FROM stock_entries se WHERE se.product_id = p.id) as last_batch_date " +
+                "FROM products p " +
+                "LEFT JOIN stock_balances sb ON p.id = sb.product_id " +
+                "WHERE p.category_id = ? " +
+                "ORDER BY p.name " + (ascending ? "ASC" : "DESC");
+                
+        List<Map<String, Object>> results = db.executeGet(query, categoryId);
+        List<Map<String, Object>> inventory = new ArrayList<>();
+        
+        for (Map<String, Object> row : results) {
+            Map<String, Object> item = new HashMap<>();
+            
+            // Essential product info
+            item.put("name", (String) row.get("name"));
+            item.put("unitType", (String) row.get("unit_type"));
+            item.put("currentPrice", ((Number) row.get("current_price")).doubleValue());
+            
+            // Stock quantity
+            double quantity = ((Number) row.get("stock_quantity")).doubleValue();
+            item.put("quantityInStock", quantity);
+            
+            // Last batch date
+            if (row.get("last_batch_date") != null) {
+                item.put("lastBatchDate", (String) row.get("last_batch_date"));
+            } else {
+                item.put("lastBatchDate", "");
+            }
+            
+            inventory.add(item);
+        }
+        
+        return inventory;
+    }
+    
+    /**
+     * Overloaded method that defaults to ascending order
+     * @param categoryId The category ID to filter by
+     * @return List of Maps containing inventory information for the specified category
+     */
+    public List<Map<String, Object>> getInventoryByCategory(int categoryId) {
+        return getInventoryByCategory(categoryId, true);
     }
 }
