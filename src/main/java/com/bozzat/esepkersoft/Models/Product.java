@@ -13,12 +13,9 @@ public class Product {
 
     public Product() {}
 
-    public Product(int id, String name, String barcode, int categoryId, 
-                  String unitType, double currentPrice) {
-        this.id = id;
+    public Product( String name, String barcode, String unitType, double currentPrice) {
         this.name = name;
         this.barcode = barcode;
-        this.categoryId = categoryId;
         this.unitType = unitType;
         this.currentPrice = currentPrice;
         this.createdAt = LocalDateTime.now();

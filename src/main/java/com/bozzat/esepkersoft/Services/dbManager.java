@@ -110,13 +110,14 @@ public class dbManager {
         createCategoriesTable();
         createSuppliersTable();
         createProductsTable();
-        createRetailPricesTable();
         createStockEntriesTable();
         createStockBalancesTable();
         createSalesTable();
         createSaleItemsTable();
         createReturnsTable();
         createReturnItemsTable();
+        createExpenseCategoriesTable();
+        createExpensesTable();
     }
 
     private void createCategoriesTable() {
@@ -142,21 +143,9 @@ public class dbManager {
                 "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 "name VARCHAR NOT NULL, " +
                 "barcode TEXT NOT NULL UNIQUE, " +
-                "category_id INTEGER, " +
                 "unit_type VARCHAR NOT NULL, " +
-                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
-                "FOREIGN KEY (category_id) REFERENCES categories(id)" +
-                ")";
-        executeSet(query);
-    }
-
-    private void createRetailPricesTable() {
-        String query = "CREATE TABLE IF NOT EXISTS retail_prices (" +
-                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "product_id INTEGER NOT NULL, " +
-                "retail_price REAL NOT NULL, " +
-                "start_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
-                "FOREIGN KEY (product_id) REFERENCES products(id)" +
+                "current_price REAL NOT NULL, " +
+                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP " +
                 ")";
         executeSet(query);
     }
@@ -170,7 +159,7 @@ public class dbManager {
                 "supplier_id INTEGER, " +
                 "arrival_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
                 "note TEXT, " +
-                "FOREIGN KEY (product_id) REFERENCES products(id), " +
+                "FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE, " +
                 "FOREIGN KEY (supplier_id) REFERENCES suppliers(id)" +
                 ")";
         executeSet(query);
@@ -182,7 +171,7 @@ public class dbManager {
                 "product_id INTEGER NOT NULL, " +
                 "quantity REAL NOT NULL, " +
                 "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
-                "FOREIGN KEY (product_id) REFERENCES products(id)" +
+                "FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE" +
                 ")";
         executeSet(query);
     }
@@ -206,7 +195,7 @@ public class dbManager {
                 "quantity REAL NOT NULL, " +
                 "unit_price REAL NOT NULL, " +
                 "FOREIGN KEY (sale_id) REFERENCES sales(id), " +
-                "FOREIGN KEY (product_id) REFERENCES products(id)" +
+                "FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE" +
                 ")";
         executeSet(query);
     }
@@ -231,7 +220,30 @@ public class dbManager {
                 "quantity REAL NOT NULL, " +
                 "unit_price REAL NOT NULL, " +
                 "FOREIGN KEY (return_id) REFERENCES returns(id), " +
-                "FOREIGN KEY (product_id) REFERENCES products(id)" +
+                "FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE" +
+                ")";
+        executeSet(query);
+    }
+
+    private void createExpenseCategoriesTable() {
+        String query = "CREATE TABLE IF NOT EXISTS expense_categories (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "name VARCHAR NOT NULL UNIQUE, " +
+                "description TEXT, " +
+                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
+                ")";
+        executeSet(query);
+    }
+
+    private void createExpensesTable() {
+        String query = "CREATE TABLE IF NOT EXISTS expenses (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "amount REAL NOT NULL, " +
+                "category_id INTEGER NOT NULL, " +
+                "description TEXT, " +
+                "expense_date TIMESTAMP NOT NULL, " +
+                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                "FOREIGN KEY (category_id) REFERENCES expense_categories(id)" +
                 ")";
         executeSet(query);
     }

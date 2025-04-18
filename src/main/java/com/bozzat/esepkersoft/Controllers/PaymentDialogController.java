@@ -129,19 +129,19 @@ public class PaymentDialogController {
                         return;
                     }
                 }
+
                 // Create sale object
                 Sale sale = new Sale(
                         paymentMethod,
                         posViewModel.totalOfTotalsProperty().get()
                 );
 
-                // Prepare sale data
+                // Prepare sale items data
                 List<SaleItem> saleItems = new ArrayList<>();
                 ObservableList<SaleItemViewModel> items = posViewModel.getSaleItems();
 
                 for (SaleItemViewModel itemVM : items) {
                     saleItems.add(new SaleItem(
-                            sale.getId(),
                             itemVM.getProductId(),
                             itemVM.getQuantity(),
                             itemVM.getPrice()

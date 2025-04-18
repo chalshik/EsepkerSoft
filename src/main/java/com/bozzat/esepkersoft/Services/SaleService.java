@@ -35,10 +35,13 @@ public class SaleService {
             if (result.isEmpty()) {
                 throw new Exception("Failed to retrieve sale ID");
             }
-            long saleId = ((Number) result.get(0).get("id")).longValue();
+            int saleId = ((Number) result.get(0).get("id")).intValue();
 
             // 3. Process each sale item
             for (SaleItem item : saleItems) {
+                // Set the sale ID on the item
+                item.setSaleId(saleId);
+
                 // Verify product exists and has sufficient stock
                 if (!verifyProductAndStock(item.getProductId(), item.getQuantity())) {
                     throw new Exception("Insufficient stock for product: " + item.getProductId());
@@ -55,7 +58,7 @@ public class SaleService {
                         "VALUES (?, ?, ?, ?)";
 
                 if (!db.executeSet(insertItemQuery,
-                        saleId,
+                        item.getSaleId(),
                         item.getProductId(),
                         item.getQuantity(),
                         item.getUnitPrice())) {
@@ -79,29 +82,43 @@ public class SaleService {
             // Start transaction
             db.executeSet("BEGIN TRANSACTION");
 
-            // 1. Get all sale items
+            // 1. Verify sale exists
+            List<Map<String, Object>> saleCheck = db.executeGet(
+                    "SELECT id FROM sales WHERE id = ?",
+                    saleId
+            );
+            if (saleCheck.isEmpty()) {
+                throw new Exception("Sale not found");
+            }
+
+            // 2. Get all sale items
             List<Map<String, Object>> items = db.executeGet(
                     "SELECT product_id, quantity FROM sale_items WHERE sale_id = ?",
                     saleId
             );
 
-            // 2. Restore inventory for each item
+            // 3. Restore stock for each item
             for (Map<String, Object> item : items) {
                 int productId = ((Number) item.get("product_id")).intValue();
                 double quantity = ((Number) item.get("quantity")).doubleValue();
 
-                // Add back to inventory
-                if (!updateInventory(productId, quantity)) {
-                    throw new Exception("Failed to restore inventory for product: " + productId);
+                // Add back to stock_balances
+                if (!updateStockBalance(productId, quantity)) {
+                    throw new Exception("Failed to restore stock for product: " + productId);
                 }
             }
 
-            // 3. Delete sale items
+            // 4. Delete from return_items first (as it references sale_items)
+            if (!db.executeSet("DELETE FROM return_items WHERE product_id IN (SELECT product_id FROM sale_items WHERE sale_id = ?)", saleId)) {
+                throw new Exception("Failed to delete return items");
+            }
+
+            // 5. Delete sale items
             if (!db.executeSet("DELETE FROM sale_items WHERE sale_id = ?", saleId)) {
                 throw new Exception("Failed to delete sale items");
             }
 
-            // 4. Delete sale record
+            // 6. Delete sale record
             if (!db.executeSet("DELETE FROM sales WHERE id = ?", saleId)) {
                 throw new Exception("Failed to delete sale record");
             }
@@ -138,5 +155,10 @@ public class SaleService {
                 "VALUES (?, COALESCE((SELECT quantity FROM inventory WHERE product_id = ?), 0) + ?, datetime('now', 'localtime'))";
 
         return db.executeSet(query, productId, productId, quantityChange);
+    }
+
+    private boolean updateStockBalance(int productId, double quantity) {
+        String query = "UPDATE stock_balances SET quantity = quantity + ? WHERE product_id = ?";
+        return db.executeSet(query, quantity, productId);
     }
 }
